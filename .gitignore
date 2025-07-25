@@ -140,6 +140,7 @@ cython_debug/
 
 
 # My Files 
-# data/
+data/*
 .devcontainer/.env
 data/datasets
+publication

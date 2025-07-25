@@ -1,0 +1,3 @@
+[submodule "topic-gen"]
+	path = topic-gen
+	url = https://github.com/irgroup/topic-gen

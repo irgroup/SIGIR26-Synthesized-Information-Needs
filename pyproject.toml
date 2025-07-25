@@ -1,0 +1,24 @@
+[project]
+name = "src"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Jüri Keller",email = "jueri.keller@th-koeln.de"}
+]
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+dependencies = [
+    "ipykernel (>=6.30.0,<7.0.0)",
+    "langchain (>=0.3.27,<0.4.0)",
+    "ir-datasets (>=0.5.11,<0.6.0)",
+    "topic-gen @ file:///Users/jueri/dev/conf26-generating-topics/topic-gen",
+    "click (>=8.2.1,<9.0.0)",
+    "pandas (>=2.3.1,<3.0.0)",
+    "langchain-google-genai (>=2.1.8,<3.0.0)",
+    "tqdm (>=4.67.1,<5.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
