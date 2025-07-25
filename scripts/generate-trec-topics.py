@@ -4,6 +4,7 @@ Example usage:
     python scripts/generate-trec-topics.py --dataset robust --llm openai --prompt uqv --nqueries 5 --ndocs 10 --output ./output
 """
 
+import json
 import logging
 import os
 from pathlib import Path
@@ -65,7 +66,7 @@ def main(dataset, llm, prompt, nqueries, ndocs, output):
 
             # write
             with open(os.path.join(output, file_name) + ".jsonl", "a+") as f:
-                f.write(f"{topic_dict}\n")
+                f.write(json.dumps(topic_dict) + "\n")
 
         except Exception as e:
             logger.error(f"Error generating topic for query {topic['qid']}: {e}")
