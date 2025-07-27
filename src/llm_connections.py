@@ -15,7 +15,7 @@ def get_llm_qwen_8b():
     return init_chat_model(
         model="qwen3:8b",
         temperature=0.0,
-        base_url="http://139.6.160.39:11434/v1",
+        base_url="http://139.6.160.39:6543/v1",
         api_key="not-needed",
         model_provider="openai",
     )
