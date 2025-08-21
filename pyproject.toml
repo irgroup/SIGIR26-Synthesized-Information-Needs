@@ -1,25 +1,33 @@
 [project]
-name = "src"
-version = "0.1.0"
-description = ""
 authors = [
-    {name = "Jüri Keller",email = "jueri.keller@th-koeln.de"}
+  {name = "Jüri Keller", email = "jueri.keller@th-koeln.de"},
 ]
-readme = "README.md"
-requires-python = ">=3.10,<4.0"
 dependencies = [
-    "ipykernel (>=6.30.0,<7.0.0)",
-    "langchain (>=0.3.27,<0.4.0)",
-    "ir-datasets (>=0.5.11,<0.6.0)",
-    "click (>=8.2.1,<9.0.0)",
-    "pandas (>=2.3.1,<3.0.0)",
-    "langchain-google-genai (>=2.1.8,<3.0.0)",
-    "tqdm (>=4.67.1,<5.0.0)",
-    "evaluate (>=0.4.5,<0.5.0)",
-    "scikit-learn (>=1.7.1,<2.0.0)"
+  "ipykernel (>=6.30.0,<7.0.0)",
+  "langchain (>=0.3.27,<0.4.0)",
+  "ir-datasets (>=0.5.11,<0.6.0)",
+  "click (>=8.2.1,<9.0.0)",
+  "pandas (>=2.3.1,<3.0.0)",
+  "langchain-google-genai (>=2.1.8,<3.0.0)",
+  "tqdm (>=4.67.1,<5.0.0)",
+  "evaluate (>=0.4.5,<0.5.0)",
+  "scikit-learn (>=1.7.1,<2.0.0)",
 ]
-
+description = ""
+name = "src"
+readme = "README.md"
+requires-python = ">=3.10,<3.13"
+version = "0.1.0"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
 build-backend = "poetry.core.masonry.api"
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+
+[tool.poetry.group.vllm.dependencies]
+vllm = "^0.10.0"
+langchain-community = "^0.3.27"
+
+
+[tool.poetry.group.dev.dependencies]
+ipywidgets = "^8.1.7"
+
