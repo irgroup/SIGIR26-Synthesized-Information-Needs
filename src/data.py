@@ -1,5 +1,18 @@
+from pathlib import Path
 import ir_datasets
 import pandas as pd
+
+
+def get_project_root() -> Path:
+    """Returns the project root folder."""
+    return Path(__file__).parent.parent
+
+
+PROJECT_ROOT = get_project_root()
+DATA_DIR = PROJECT_ROOT / "data"
+DATA_DIR_RAW = PROJECT_ROOT / "data" / "raw"
+DATA_DIR_PROCESSED = PROJECT_ROOT / "data" / "processed"
+MODELS_DIR = str(DATA_DIR_RAW / "datasets" / "cache")
 
 
 class uqv_parser:
@@ -22,8 +35,9 @@ class uqv_parser:
 
     def parse_variants(self):
         # variants
+        uqv_path = DATA_DIR_RAW / "trec-reference" / "robust-uqv.txt"
         uqv = pd.read_csv(
-            "data/raw/trec-reference/robust-uqv.txt", sep=";", names=["query_id", "uqv"]
+            uqv_path, sep=";", names=["query_id", "uqv"]
         )
         uqv["qid"] = uqv["query_id"].apply(lambda x: x.split("-")[0])
 
@@ -42,6 +56,32 @@ class uqv_parser:
             )
 
         return self.queries
+
+
+class ird_qrels_parser:
+    def prepare_qrels(dataset_id, k=None):
+        def add_doc_text(r):
+            doc = store.get(r.doc_id)
+            doc_str = doc.title + "\n" + doc.body
+            return doc_str[:10000].replace("\n", " ")
+
+        dataset = ir_datasets.load(dataset_id)
+        store = dataset.docs_store()
+
+        qrels = pd.DataFrame(dataset.qrels)
+        if k:
+            qrels = qrels.head(k)
+        queries = pd.DataFrame(dataset.queries)
+
+        qrels_extended = qrels.merge(
+            queries, left_on="query_id", right_on="query_id")
+        qrels_extended["doc"] = qrels_extended.apply(add_doc_text, axis=1)
+
+        documents = qrels_extended["doc"].to_list()
+        titles = qrels_extended["title"].to_list()
+        narratives = qrels_extended["narrative"].to_list()
+        descriptions = qrels_extended["description"].to_list()
+        return documents, titles, narratives, descriptions, qrels
 
 
 def get_dataset(dataset_name):
