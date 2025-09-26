@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Experiment 2: Judge relevance of an existing testcollection
+Experiment 2.1: Judge relevance of an existing test collection using the title of the topic only
 
 Example usage:
-    python scripts/exp2-llm-judge.py --model Qwen/Qwen3-30B-A3B-Instruct-2507-FP8 --k 50 --gpus 1
+    python scripts/exp2.1-llm-judge.py --model Qwen/Qwen3-30B-A3B-Instruct-2507-FP8 --k 50 --gpus 1
 
 """
 import click
@@ -14,7 +14,7 @@ from langchain.chat_models import init_chat_model
 from topic_gen.generate import Generator
 from topic_gen.models import MTO_responds
 from langchain_community.llms import VLLM
-from src.data import MODELS_DIR, ird_qrels_parser, DATA_DIR_PROCESSED
+from src.data import MODELS_DIR, ird_qrels_parser, DATA_DIR_PROCESSED, DATA_DIR_RAW
 from topic_gen import logger
 from langchain_openai import ChatOpenAI
 
@@ -52,12 +52,13 @@ def main(model, k, max_concurrency, gpus):
     #            )
 
     # Load data
-    documents, titles, narratives, descriptions, qrels = ird_qrels_parser.prepare_qrels(
+    documents, titles, _, _, qrels = ird_qrels_parser.prepare_qrels(
         "disks45/nocr/trec-robust-2004", k=k)
 
     # Setup generator
-    prompt_name = "robust-DNA-zero-shot"
+    prompt_name = "robust-DNA-zero-shot-no-title-description"
     generator = Generator(llm=llm, output_class=MTO_responds,
+                          prompts_dir=DATA_DIR_RAW / "prompts",
                           prompt_name=prompt_name)
 
     # Generate judgments
@@ -69,8 +70,6 @@ def main(model, k, max_concurrency, gpus):
     res = generator.generate(
         document=documents,
         query=titles,
-        narrative=narratives,
-        description=descriptions,
         config=config
     )
     end_time = time.time()
@@ -87,6 +86,7 @@ def main(model, k, max_concurrency, gpus):
 
     qrels["relevance"] = llm_judgments
 
+    # format filename
     output_file = f"qrels-robust-{model.replace('/', '-')}-{prompt_name}"
     if k is not None:
         output_file += f"-k{k}"
