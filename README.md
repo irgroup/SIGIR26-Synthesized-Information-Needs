@@ -26,8 +26,3 @@ Generate judgments for Robust
 - Generate qrels based on **title** only
 - Generate qrels based on **title**, **description** 
 - Generate qrels based on **narrative** 
-
-
-
-
-Di vormittag
