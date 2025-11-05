@@ -1,0 +1,125 @@
+from langchain.chat_models import init_chat_model
+from typing import Optional
+from langchain_openai import ChatOpenAI
+from topic_gen import logger
+from langchain_community.llms import VLLM
+import os
+from src.data import MODELS_DIR
+
+import torch
+
+
+def get_llm_qwen3_14B_MT100_no_think(connection: str, gpus: str = "0"):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="Qwen/Qwen3-14B",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}, "max_tokens": 100}
+    )
+
+
+def get_llm_qwen3_14B_no_think(connection: str, gpus: str = "0"):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="Qwen/Qwen3-14B",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}}
+    )
+
+
+def get_llm_qwen3_30B_MT100_no_think(connection: str, gpus: str = "0"):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}, "max_tokens": 100}
+    )
+
+
+def get_llm_qwen3_30B_no_think(connection: str, gpus: str = "0"):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}}
+    )
+
+
+def get_llm_gpt_oss_20B(connection: str, gpus: str = "0"):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="openai/gpt-oss-20b",
+    )
+
+
+def get_llm_gpt_oss_120B(connection: str, gpus: str = "0"):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="openai/gpt-oss-120b",
+    )
+
+
+def get_llm_gemeni_flash(connection=None, gpus: str = "0"):
+    return init_chat_model(
+        model="gemini-2.5-flash",
+        model_provider="google_genai",
+        temperature=0,
+    )
+
+
+def get_llm_deepseek(connection=None, gpus: str = "0"):
+    return init_chat_model(
+        model="deepseek-chat",
+        model_provider="deepseek",
+        temperature=0,
+    )
+
+
+def get_llm_qwen3_30B_A3B_Instruct_2507_FP8(connection=None, gpus: str = "0"):
+    # setup gpus
+    logger.info(f"Cuda: {torch.cuda.is_available()}")
+    os.environ["CUDA_VISIBLE_DEVICES"] = gpus
+    os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
+    logger.info(f"Number of GPUs: {torch.cuda.device_count()}")
+
+    # load model
+    llm = VLLM(model="Qwen/Qwen3-30B-A3B-Instruct-2507-FP8",
+               download_dir=MODELS_DIR,
+               temperature=0.7,
+               top_p=0.8,
+               top_k=20,
+               min_p=0,
+               vllm_kwargs={
+                   "max_model_len": 32768,
+                   "max_num_batched_tokens": 32768,
+                   "gpu_memory_utilization": 0.7
+               }
+               )
+    return llm
+
+
+# register LLM connections
+def get_llm(llm_name: str, connection: str, gpus: str):
+    llm_connections = {
+        "qwen3-14B-MT100-no-think": get_llm_qwen3_14B_MT100_no_think,
+        "qwen3-14B-no-think": get_llm_qwen3_14B_no_think,
+        "qwen3-30B-MT100-no-think": get_llm_qwen3_30B_MT100_no_think,
+        "qwen3-30B-no-think": get_llm_qwen3_30B_no_think,
+        "gemini-2.5-flash": get_llm_gemeni_flash,
+        "Qwen3-30B-A3B-Instruct-2507-FP8": get_llm_qwen3_30B_A3B_Instruct_2507_FP8,
+        "gpt-oss-20b": get_llm_gpt_oss_20B,
+        "gpt-oss-120b": get_llm_gpt_oss_120B,
+        "deepseek-V3.2": get_llm_deepseek,
+    }
+    llm = llm_connections.get(llm_name)
+    if llm is None:
+        raise ValueError(
+            f"LLM {llm_name} is not supported. Available options: {list(llm_connections.keys())}"
+        )
+    return llm(connection=connection, gpus=gpus)
