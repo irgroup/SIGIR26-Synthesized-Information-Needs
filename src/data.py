@@ -1,6 +1,8 @@
 from pathlib import Path
 import ir_datasets
 import pandas as pd
+from typing import Optional
+import json
 
 
 def get_project_root() -> Path:
@@ -13,6 +15,14 @@ DATA_DIR = PROJECT_ROOT / "data"
 DATA_DIR_RAW = PROJECT_ROOT / "data" / "raw"
 DATA_DIR_PROCESSED = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = str(DATA_DIR_RAW / "datasets" / "cache")
+
+
+def parse_qrel_file_names(qrel_file: str) -> tuple:
+    """Parses the qrel file name to extract task, model, prompt, topic, and k."""
+    qrel_file = qrel_file.strip(".csv.gz")
+    qrel_file = qrel_file.strip(".csv")
+    task, model, prompt, topic, k = qrel_file.split("_")
+    return task, model, prompt, topic, k
 
 
 class uqv_parser:
@@ -47,9 +57,9 @@ class uqv_parser:
             self.queries.append(
                 {
                     "qid": query.query_id,
-                    "title": query.title,
-                    "description": query.description,
-                    "narrative": query.narrative,
+                    "title": query.title.replace("\n", " "),
+                    "description": query.description.replace("\n", " "),
+                    "narrative": query.narrative.replace("\n", " "),
                     "uqv": variants,
                     "rel_docs": self.qrels_map.get(query.query_id),
                 }
@@ -58,8 +68,51 @@ class uqv_parser:
         return self.queries
 
 
+def get_DNA_qrels():
+    # Load the original DNA qrels from a parquet file
+    def split_ids(qrel_id):
+        """Split the qrel_id into query_id and doc_id"""
+        qrel_id = qrel_id.strip("-DNA-")
+        query_id = qrel_id.split("-")[0]
+        doc_id = "-".join(qrel_id.split("-")[1:])
+        return query_id, doc_id
+
+    def get_relevance(response):
+        response = response.strip()
+        if not response.startswith("{"):
+            response = "{" + response
+        if not response.endswith("}"):
+            response = response[: response.rfind("}") + 1]
+
+        try:
+            response = json.loads(response)
+        except json.JSONDecodeError:
+            print(
+                f"Could not decode response: {response}, returning relevance: 0")
+            # Only one qrel is left that misses propper key format ("). In this case the relevance is 0
+            return 0
+        return response.get("O")
+
+    df = pd.read_parquet("data/raw/qrel-export.parquet")
+
+    df[["query_id", "doc_id"]] = df["qrel_id"].apply(
+        lambda x: pd.Series(split_ids(x)))
+
+    # Add a constant column for Q0 as per TREC format
+    df["q0"] = "0"
+
+    # drop trec relevance column
+    df = df.drop(columns=["relevance"])
+
+    df["relevance"] = df["response"].apply(get_relevance)
+
+    # # Prepare the final qrels DataFrame in TREC format
+    qrels = df[["query_id", "q0", "doc_id", "relevance"]]
+    return qrels
+
+
 class ird_qrels_parser:
-    def prepare_qrels(dataset_id, k=None):
+    def prepare_qrels(dataset_id: str, k: Optional[int] = None, s: bool = False, topics: bool = None):
         def add_doc_text(r):
             doc = store.get(r.doc_id)
             doc_str = doc.title + "\n" + doc.body
@@ -68,10 +121,27 @@ class ird_qrels_parser:
         dataset = ir_datasets.load(dataset_id)
         store = dataset.docs_store()
 
+        # Load custom topics file
+        if isinstance(topics, pd.DataFrame):
+            queries = topics
+        else:
+            queries = pd.DataFrame(dataset.queries)
+
         qrels = pd.DataFrame(dataset.qrels)
+
+        # remove potentially unused topics
+        qrels = qrels[qrels["query_id"].isin(queries["query_id"])]
+
+        if s:
+            # Overwrite qrels with DNA qrels
+            qrels = get_DNA_qrels()
+
+        # sample k qrels per relevance label
         if k:
-            qrels = qrels.head(k)
-        queries = pd.DataFrame(dataset.queries)
+            sampled = []
+            for _, group in qrels.groupby("relevance"):
+                sampled.append(group.sample(n=k, random_state=42))
+            qrels = pd.concat(sampled).sort_index()  # maintain original order
 
         qrels_extended = qrels.merge(
             queries, left_on="query_id", right_on="query_id")
@@ -81,6 +151,7 @@ class ird_qrels_parser:
         titles = qrels_extended["title"].to_list()
         narratives = qrels_extended["narrative"].to_list()
         descriptions = qrels_extended["description"].to_list()
+
         return documents, titles, narratives, descriptions, qrels
 
 
