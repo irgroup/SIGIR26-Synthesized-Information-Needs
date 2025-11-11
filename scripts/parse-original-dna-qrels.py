@@ -6,7 +6,7 @@ def parse_original_dna_qrels():
 
     # save to processed data directory
     output_file = DATA_DIR_PROCESSED / "exp2" /\
-        "qrels-robust_gpt-4.1_robust-DNA-zero_topics-trec_s.csv.gz"
+        "qrels-robust_gpt-4.1_-DNA-zero-shot_topics-trec_s.csv.gz"
     qrels.to_csv(output_file, index=False, header=False,
                  sep=" ", compression="gzip")
 

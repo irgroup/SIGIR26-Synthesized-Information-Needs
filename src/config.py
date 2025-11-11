@@ -25,7 +25,7 @@ def get_llm_qwen3_14B_no_think(connection: str, gpus: str = "0"):
         openai_api_key="not-needed",
         model_name="Qwen/Qwen3-14B",
         extra_body={"chat_template_kwargs": {
-            "enable_thinking": False}}
+            "enable_thinking": False}, "max_tokens": 10000}
     )
 
 
@@ -45,7 +45,7 @@ def get_llm_qwen3_30B_no_think(connection: str, gpus: str = "0"):
         openai_api_key="not-needed",
         model_name="Qwen/Qwen3-30B-A3B-Instruct-2507",
         extra_body={"chat_template_kwargs": {
-            "enable_thinking": False}}
+            "enable_thinking": False}, "max_tokens": 10000}
     )
 
 
