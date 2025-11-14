@@ -73,7 +73,7 @@ def get_llm_gpt_oss_120B_MT1000(connection: str, gpus: str = "0"):
         openai_api_key="not-needed",
         model_name="openai/gpt-oss-120b",
         extra_body={"chat_template_kwargs": {
-            "enable_thinking": False}, "max_tokens": 100}
+            "enable_thinking": False}, "max_tokens": 1000}
     )
 
 
