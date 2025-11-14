@@ -9,12 +9,14 @@ Example usage:
 import click
 import time
 import os
+import json
 from pathlib import Path
+from datetime import datetime
 
 from topic_gen.generate import Generator
 from topic_gen.models import Topics
 from topic_gen import logger
-from src.data import get_dataset, make_file_name, alter_class
+from src.data import get_dataset, alter_class
 from src.config import get_llm
 
 logger.setLevel("DEBUG")
@@ -31,9 +33,10 @@ logger.setLevel("DEBUG")
 @click.option("--k", help="Generate results only for the first k samples.", default=None, type=int)
 @click.option("--prompt", help="Prompt file path", type=click.Path(), required=True)
 @click.option("--nqueries", help="Number of query variants.", default=5, type=int)
-@click.option("--ndocs", help="Number of relevant documents.", default=3, type=int)
+@click.option("--ndocspos", help="Number of relevant documents.", default=3, type=int)
+@click.option("--ndocsneg", help="Number of non-relevant documents.", default=3, type=int)
 @click.option("--output", help="Output file path", type=click.Path(), default=".")
-def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, ndocs, output):
+def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, ndocspos, ndocsneg, output):
     # Get LLM
     llm = get_llm(model, connection=connection, gpus=gpus)
 
@@ -41,7 +44,7 @@ def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, nd
     dataset = get_dataset(dataset_name=data)
 
     components = dataset.topic_components(
-        k=k, sample_queries=nqueries, sample_docs=ndocs)
+        k=k, sample_queries=nqueries, ndocspos=ndocspos, ndocsneg=ndocsneg)
 
     # determine output class
     output_class = alter_class(prompt, dataset.topic_class)
@@ -64,15 +67,26 @@ def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, nd
     end_time = time.time()
     logger.info(f"Execution time: {end_time - start_time} seconds")
     logger.info(f"Generated {generated_topics} topics.")
+
     # Save output
-    filename = make_file_name(
-        data=data,
-        model=model,
-        prompt=prompt,
-        nqueries=nqueries,
-        ndocs=ndocs,
-        k=k,
-    )
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    os.mkdir(Path(output) / timestamp)
+    with open(Path(output) / timestamp / "metadata.json", "w") as f:
+        json.dump({
+            "time": timestamp,
+            "model": model,
+            "max_concurrency": max_concurrency,
+            "connection": connection,
+            "gpus": gpus,
+            "data": data,
+            "k": k,
+            "prompt": prompt,
+            "nqueries": nqueries,
+            "ndocspos": ndocspos,
+            "ndocsneg": ndocsneg,
+            "output": output,
+            "task": "topics"
+        }, f)
 
     topics = []
     for topic in generated_topics:
@@ -82,9 +96,7 @@ def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, nd
             logger.warning(f"Error: {topic}")
 
     generated_topics = Topics[output_class](topics=topics)
-
-    filename += ".jsonl"
-    generated_topics.to_jsonl(Path(output) / filename)
+    generated_topics.to_jsonl(Path(output) / timestamp / "topics.jsonl")
 
 
 if __name__ == "__main__":

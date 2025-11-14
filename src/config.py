@@ -62,6 +62,18 @@ def get_llm_gpt_oss_120B(connection: str, gpus: str = "0"):
         openai_api_base=connection,
         openai_api_key="not-needed",
         model_name="openai/gpt-oss-120b",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}, "max_tokens": 10000}
+    )
+
+
+def get_llm_gpt_oss_120B_MT1000(connection: str, gpus: str = "0"):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="openai/gpt-oss-120b",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}, "max_tokens": 100}
     )
 
 
@@ -113,8 +125,9 @@ def get_llm(llm_name: str, connection: str, gpus: str):
         "qwen3-30B-no-think": get_llm_qwen3_30B_no_think,
         "gemini-2.5-flash": get_llm_gemeni_flash,
         "Qwen3-30B-A3B-Instruct-2507-FP8": get_llm_qwen3_30B_A3B_Instruct_2507_FP8,
-        "gpt-oss-20b": get_llm_gpt_oss_20B,
-        "gpt-oss-120b": get_llm_gpt_oss_120B,
+        "gpt-oss-20B": get_llm_gpt_oss_20B,
+        "gpt-oss-120B": get_llm_gpt_oss_120B,
+        "gpt-oss-120B-MT1000": get_llm_gpt_oss_120B_MT1000,
         "deepseek-V3.2": get_llm_deepseek,
     }
     llm = llm_connections.get(llm_name)

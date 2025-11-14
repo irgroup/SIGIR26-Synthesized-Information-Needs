@@ -41,7 +41,7 @@ def make_file_name(data: str, model: str, prompt: str, topic: Optional[str] = No
     # ensure prompt is filename
     prompt = os.path.splitext(os.path.basename(prompt))[0]
     filename = f"{task}_{data}_{model}_{prompt}"
-    if task == "qrel":
+    if task == "qrels":
         if topic:
             topic = os.path.splitext(os.path.basename(topic))[0]
             topic = topic.replace("_", "-")
@@ -156,6 +156,17 @@ class Robust(Dataset):
         self.store = self.dataset.docs_store()
         self.qrels_map = self._make_qrels_map()
 
+    def _sample_docs(self, rel_doc_ids: set[str], sample_docs: int) -> str:
+        if len(rel_doc_ids) == 0:
+            return ""
+
+        sampled_doc_texts = []
+        for doc_id in random.sample(rel_doc_ids, min(sample_docs, len(rel_doc_ids))):
+            sampled_doc_texts.append(self.store.get(
+                doc_id).body.replace("\n", " ")[:10000])
+        joined_docs = "\n\n".join(sampled_doc_texts)
+        return joined_docs
+
     def _make_qrels_map(self):
         """Construct a mapping from query IDs to their relevant documents."""
         qrels_map = {}
@@ -181,12 +192,14 @@ class Robust(Dataset):
         uqv["qid"] = uqv["query_id"].apply(lambda x: x.split("-")[0])
         return uqv
 
-    def topic_components(self, seed: Optional[int] = 42, k: Optional[int] = None, s: Optional[bool] = False, sample_queries: Optional[int] = None, sample_docs: Optional[int] = None) -> Dict[str, List]:
+    def topic_components(self, sample_queries: int, ndocspos: int, ndocsneg: int, seed: Optional[int] = 42, k: Optional[int] = None, s: Optional[bool] = False) -> Dict[str, List]:
         """Return the components of the topics as lists."""
         random.seed(seed)
         if s:
-            qrels = get_DNA_qrels()
-            qrels = set(qrels["query_id"].to_list())
+            sampled_qrels = get_DNA_qrels()
+            sampled_qrels = set(sampled_qrels["query_id"].to_list())
+
+        qrels = pd.DataFrame(self.dataset.qrels)
 
         qids = []
         titles = []
@@ -194,28 +207,28 @@ class Robust(Dataset):
         narratives = []
         query_variants = []
         rel_docs = []
+        not_rel_docs = []
 
         uqv = self._load_query_variants()
         for idx, query in enumerate(self.dataset.queries_iter()):
-            if s and query.query_id not in qrels:
+            if s and query.query_id not in sampled_qrels:
                 continue
             # Query variants
             variants = uqv[uqv["qid"] == query.query_id]["uqv"].to_list()
-            if sample_queries is not None:
-                variants = random.sample(
-                    variants, min(sample_queries, len(variants)))
+            variants = random.sample(
+                variants, min(sample_queries, len(variants)))
             query_variants.append("\n".join(variants))
 
             # Rel Docs
-            all_rel_docs = self.qrels_map.get(query.query_id)
-            if not all_rel_docs:
-                print(
-                    f"Warning: Topic {query.query_id} has no relevant documents.")
-                continue
-            if sample_docs is not None:
-                all_rel_docs = random.sample(
-                    all_rel_docs, min(sample_docs, len(all_rel_docs)))
-            rel_docs.append("\n\n".join(all_rel_docs))
+            rel_doc_ids = qrels[(qrels["query_id"] == query.query_id) & (
+                qrels["relevance"] > 0)]["doc_id"].to_list()
+            rel_docs.append(self._sample_docs(rel_doc_ids, ndocspos))
+
+            # Not rel Docs
+            not_rel_doc_ids = qrels[(qrels["query_id"] == query.query_id) & (
+                qrels["relevance"] == 0)]["doc_id"].to_list()
+            not_rel_docs.append(self._sample_docs(
+                not_rel_doc_ids, ndocsneg))
 
             # Other components
             qids.append(query.query_id)
@@ -233,6 +246,7 @@ class Robust(Dataset):
             "narrative": narratives,
             "queries": query_variants,
             "relevant_documents": rel_docs,
+            "not_relevant_documents": not_rel_docs,
         }
 
     def qrel_components(self, k: Optional[int] = None, s: bool = False, topics: bool = None) -> Dict[str, List]:
@@ -242,12 +256,8 @@ class Robust(Dataset):
             return doc_str[:10000].replace("\n", " ")
 
         # Load custom topics file
-        if isinstance(topics, pd.DataFrame):
+        if topics is not None:
             queries = topics
-        elif isinstance(topics, str):
-            logger.info(f"Loading custom topics file from {topics}")
-            queries = pd.read_json(topics, lines=True, dtype=str)
-            queries.rename(columns={"topic_id": "query_id"}, inplace=True)
         else:
             queries = pd.DataFrame(self.dataset.queries)
 
@@ -305,7 +315,7 @@ def get_DNA_qrels():
             return 0
         return response.get("O")
 
-    df = pd.read_parquet("data/raw/qrel-export.parquet")
+    df = pd.read_parquet(DATA_DIR_RAW/"qrel-export.parquet")
 
     df[["query_id", "doc_id"]] = df["qrel_id"].apply(
         lambda x: pd.Series(split_ids(x)))

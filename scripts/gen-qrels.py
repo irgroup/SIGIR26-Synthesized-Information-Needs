@@ -5,7 +5,10 @@ Generate TREC Topics
 Example usage:
     python scripts/gen-qrels.py --model qwen3-14B-no-think --data robust --k 1 --s --prompt robust-DNA-zero-shot --output .
 """
-
+import os
+import pandas as pd
+import json
+import datetime
 import click
 import time
 from pathlib import Path
@@ -32,14 +35,31 @@ logger.setLevel("DEBUG")
 @click.option("--prompt", help="Prompt file path", type=click.Path(), required=True)
 @click.option("--topics", help="Topics file path", type=click.Path(), required=False, default=None)
 @click.option("--output", help="Output file path", type=click.Path(), default=".")
-def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, output):
+@click.option("--no_compression", help="Compress output files", is_flag=True, default=False)
+def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, output, no_compression):
     # Get LLM
     llm = get_llm(model, connection=connection, gpus=gpus)
 
     # load data
+    if topics:
+        with open(os.path.join(topics, "metadata.json"), "r") as f:
+            topics_metadata = json.load(f)
+        topics = pd.read_json(os.path.join(
+            topics, "topics.jsonl"), lines=True, dtype=str)
+        topics.rename(columns={"topic_id": "query_id"}, inplace=True)
+    else:
+        topics_metadata = {
+            "date": None,
+            "model": "trec assessors",
+            "data": data,
+            "prompt": None,
+            "k": k,
+            "s": s,
+            "task": "topics",
+        }
+
     dataset = get_dataset(dataset_name=data)
     components = dataset.qrel_components(k=k, s=s, topics=topics)
-
     qrels = components.pop("qrels", None)
 
     # Setup generator
@@ -70,20 +90,39 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, o
     qrels["relevance"] = llm_judgments
 
     # Save output
-    filename = make_file_name(
-        data=data,
-        model=model,
-        prompt=prompt,
-        topic=topics,
-        k=k,
-        s=s,
-        task="qrels",
-    )
+    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    os.mkdir(Path(output) / timestamp)
+    with open(Path(output) / timestamp / "metadata.json", "w") as f:
+        json.dump({
+            "date": timestamp,
+            "model": model,
+            "data": data,
+            "prompt": prompt,
+            "k": k,
+            "s": s,
+            "topics": topics_metadata,
+            "task": "qrels",
+        }, f)
 
-    filename += ".csv.gz"
-    qrels.to_csv(Path(output) / filename, sep=" ",
-                 index=False, header=False, compression="gzip")
+    if not no_compression:
+        qrels.to_csv(Path(output) / timestamp / "qrels.csv.gz", sep=" ",
+                     index=False, header=False, compression="gzip")
+    else:
+        qrels.to_csv(Path(output) / timestamp / "qrels.csv", sep=" ",
+                     index=False, header=False)
 
 
 if __name__ == "__main__":
     main()
+    # main(
+    #     [
+    #         "--model", "gpt-oss-120B-MT100",
+    #         "--data", "robust",
+    #         "--connection", "http://localhost:6543/v1",
+    #         "--k", "1",
+    #         "--s",
+    #         "--prompt", "-DNA-zero-shot",
+    #         "--output", ".",
+    #         "--no_compression",
+    #     ]
+    # )
