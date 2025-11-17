@@ -16,7 +16,7 @@ from pathlib import Path
 from topic_gen.generate import Generator
 from topic_gen.models import MTO_responds
 from topic_gen import logger
-from src.data import get_dataset, make_file_name
+from src.data import get_dataset
 from src.config import get_llm
 
 logger.setLevel("DEBUG")
@@ -116,7 +116,7 @@ if __name__ == "__main__":
     main()
     # main(
     #     [
-    #         "--model", "gpt-oss-120B-MT100",
+    #         "--model", "gpt-oss-120B-MT1000",
     #         "--data", "robust",
     #         "--connection", "http://localhost:6543/v1",
     #         "--k", "1",
