@@ -18,6 +18,8 @@ from topic_gen.models import MTO_responds
 from topic_gen import logger
 from src.data import get_dataset
 from src.config import get_llm
+from tirex_tracker import start_tracking, stop_tracking
+
 
 logger.setLevel("DEBUG")
 
@@ -37,6 +39,12 @@ logger.setLevel("DEBUG")
 @click.option("--output", help="Output file path", type=click.Path(), default=".")
 @click.option("--no_compression", help="Compress output files", is_flag=True, default=False)
 def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, output, no_compression):
+    # setup tracking
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    os.mkdir(Path(output) / timestamp)
+    handle = start_tracking(export_file_path=Path(
+        output) / timestamp / "index-ir-metadata.yml")
+
     # Get LLM
     llm = get_llm(model, connection=connection, gpus=gpus)
 
@@ -90,8 +98,6 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, o
     qrels["relevance"] = llm_judgments
 
     # Save output
-    timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    os.mkdir(Path(output) / timestamp)
     with open(Path(output) / timestamp / "metadata.json", "w") as f:
         json.dump({
             "date": timestamp,
@@ -110,6 +116,8 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, o
     else:
         qrels.to_csv(Path(output) / timestamp / "qrels.csv", sep=" ",
                      index=False, header=False)
+
+    stop_tracking(handle)
 
 
 if __name__ == "__main__":

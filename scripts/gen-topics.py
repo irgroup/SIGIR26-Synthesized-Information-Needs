@@ -18,6 +18,7 @@ from topic_gen.models import Topics
 from topic_gen import logger
 from src.data import get_dataset, alter_class
 from src.config import get_llm
+from tirex_tracker import start_tracking, stop_tracking
 
 logger.setLevel("DEBUG")
 
@@ -31,12 +32,19 @@ logger.setLevel("DEBUG")
 # Generation options
 @click.option("--data", help="Test collection to be loaded", type=str, required=True)
 @click.option("--k", help="Generate results only for the first k samples.", default=None, type=int)
+@click.option("--s", help="Generate only the qrels used in the original paper.", is_flag=True, default=False)
 @click.option("--prompt", help="Prompt file path", type=click.Path(), required=True)
 @click.option("--nqueries", help="Number of query variants.", default=5, type=int)
 @click.option("--ndocspos", help="Number of relevant documents.", default=3, type=int)
 @click.option("--ndocsneg", help="Number of non-relevant documents.", default=3, type=int)
 @click.option("--output", help="Output file path", type=click.Path(), default=".")
-def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, ndocspos, ndocsneg, output):
+def main(model, max_concurrency, connection, gpus, data, k, s, prompt, nqueries, ndocspos, ndocsneg, output):
+    # setup tracking
+    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
+    os.mkdir(Path(output) / timestamp)
+    handle = start_tracking(export_file_path=Path(
+        output) / timestamp / "index-ir-metadata.yml")
+
     # Get LLM
     llm = get_llm(model, connection=connection, gpus=gpus)
 
@@ -44,7 +52,7 @@ def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, nd
     dataset = get_dataset(dataset_name=data)
 
     components = dataset.topic_components(
-        k=k, sample_queries=nqueries, ndocspos=ndocspos, ndocsneg=ndocsneg)
+        k=k, sample_queries=nqueries, ndocspos=ndocspos, ndocsneg=ndocsneg, s=s)
 
     # determine output class
     output_class = alter_class(prompt, dataset.topic_class)
@@ -69,8 +77,6 @@ def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, nd
     logger.info(f"Generated {generated_topics} topics.")
 
     # Save output
-    timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
-    os.mkdir(Path(output) / timestamp)
     with open(Path(output) / timestamp / "metadata.json", "w") as f:
         json.dump({
             "time": timestamp,
@@ -98,6 +104,19 @@ def main(model, max_concurrency, connection, gpus, data, k, prompt, nqueries, nd
     generated_topics = Topics[output_class](topics=topics)
     generated_topics.to_jsonl(Path(output) / timestamp / "topics.jsonl")
 
+    stop_tracking(handle)
+
 
 if __name__ == "__main__":
     main()
+    # main(
+    #     [
+    #         "--model", "qwen3-30B-no-think",
+    #         "--data", "robust",
+    #         "--connection", "http://localhost:6543/v1",
+    #         "--k", "1",
+    #         "--s",
+    #         "--output", ".",
+    #         "--prompt", "./data/raw/prompts/trec-contrastive.yaml",
+    #     ]
+    # )
