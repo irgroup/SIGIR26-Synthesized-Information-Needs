@@ -1,13 +1,16 @@
+# from ir_datasets_longeval import load
+from ir_datasets_longeval import load
 import os
 from pathlib import Path
 import ir_datasets
 import pandas as pd
-from typing import Optional, Union, List, Dict
+from typing import Optional, Union, List, Dict, Tuple
 import json
 from topic_gen.models import MTO_responds, TRECTopic, BaseTopic
 import random
 from pydantic import BaseModel, create_model
 from topic_gen import logger
+import ir_measures
 
 
 def get_project_root() -> Path:
@@ -22,42 +25,43 @@ DATA_DIR_PROCESSED = PROJECT_ROOT / "data" / "processed"
 MODELS_DIR = str(DATA_DIR_RAW / "datasets" / "cache")
 
 
-def parse_file_names(filename: str) -> tuple:
-    """Parses the qrel file name to extract task, model, prompt, topic, and k."""
-    filename = filename.strip(".csv.gz")
-    filename = filename.strip(".csv")
-    filename_parts = filename.split("_")
-    task = filename_parts[0]
-    data = filename_parts[1]
-    model = filename_parts[2]
-    prompt = filename_parts[3]
-    topics = filename_parts[4]
-    extra = filename_parts[5:]
-    return task, data, model, prompt, topics, extra
+def metadata_to_table(metadata_records: List[Dict]) -> pd.DataFrame:
+    # metadata table
+    metadata = pd.DataFrame(metadata_records)
+    metadata = metadata.join(pd.json_normalize(
+        metadata["topics"]).add_prefix("topics_"))
+    metadata.drop(columns=["topics"], inplace=True)
+    metadata["topics_prompt"] = metadata["topics_prompt"].apply(
+        lambda p: str(Path(p).stem) if pd.notnull(p) else "human")
+    metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
+    metadata["model"] = metadata["model"].str.replace("-MT1000", "")
+    metadata["model"] = metadata["model"].str.replace("-MT100", "")
+    return metadata
 
 
-def make_file_name(data: str, model: str, prompt: str, topic: Optional[str] = None, nqueries: Optional[int] = None, ndocs: Optional[int] = None, k: Optional[int] = None, s: Optional[int] = None, task: Optional[str] = "topics") -> str:
-    model = model.replace("/", "-")
-    # ensure prompt is filename
-    prompt = os.path.splitext(os.path.basename(prompt))[0]
-    filename = f"{task}_{data}_{model}_{prompt}"
-    if task == "qrels":
-        if topic:
-            topic = os.path.splitext(os.path.basename(topic))[0]
-            topic = topic.replace("_", "-")
-        else:
-            topic = "topics-trec"
-        filename += f"_{topic}"
+def load_qrels_from_path(qrels_path: Union[str, Path]) -> Tuple[List[pd.DataFrame], List[str], List[Dict]]:
+    predictions = []
+    names = []
+    metadata_records = []
 
-    if nqueries is not None:
-        filename += f"_nq{nqueries}"
-    if ndocs is not None:
-        filename += f"_nd{ndocs}"
-    if k is not None:
-        filename += f"_k{k}"
-    if s is not None:
-        filename += f"_s"
-    return filename
+    for result in os.listdir(qrels_path):
+        # metadata
+        try:
+            with open(os.path.join(qrels_path, result, "metadata.json")) as f:
+                metadata = json.load(f)
+            metadata_records.append(metadata)
+        except FileNotFoundError:
+            logger.warning(
+                f"Metadata not found for result {result}, skipping...")
+            continue
+        # predictions
+        qrels = ir_measures.read_trec_qrels(
+            os.path.join(qrels_path, result, "qrels.csv.gz"))
+        predictions.append(qrels)
+        # names
+        names.append(result)
+
+    return predictions, names, metadata_to_table(metadata_records)
 
 
 class TRECTitle(BaseTopic):
@@ -126,35 +130,26 @@ def alter_class(prompt: str, base_class: BaseModel) -> BaseModel:
 
 
 class Dataset:
-    def __init__(self, dataset_name: str):
+    def __init__(self, dataset_name: str, irds: ir_datasets.Dataset):
         self.dataset_name = dataset_name
+        self.dataset = irds
+        self.store = self.dataset.docs_store()
+        self.qrels_map = self._make_qrels_map()
+        self.topics = pd.DataFrame(self.dataset.queries)
+        self.qrels = pd.DataFrame(self.dataset.qrels)
+
         self.topic_class = TRECTopic
         self.qrel_class = MTO_responds
 
-    def topic_components(self) -> Dict[str, Union[pd.DataFrame, List]]:
-        """Return the components needed to generate a topic."""
-        return {"qids": None,
-                "title": None,
-                "description": None,
-                "narrative": None,
-                "queries": None,
-                "relevant_documents": None}
+    def _get_document_text(self, doc_id: str) -> str:
+        """Retrieve the text of a document given its ID."""
+        doc = self.store.get(doc_id)
+        return doc.default_text().replace("\n", " ")[:10000].strip()
 
-    def qrel_components(self) -> Dict[str, Union[pd.DataFrame, List]]:
-        """Return the components needed to generate qrels."""
-        return {"document": None,
-                "queries": None,
-                "narrative": None,
-                "description": None,
-                "qrels": None}
-
-
-class Robust(Dataset):
-    def __init__(self):
-        self.dataset = ir_datasets.load("disks45/nocr/trec-robust-2004")
-        super().__init__("robust")
-        self.store = self.dataset.docs_store()
-        self.qrels_map = self._make_qrels_map()
+    def get_presampled_qrels(self) -> pd.DataFrame:
+        logger.warning(
+            "Presampled qrels not available for this dataset. Returning qrels.")
+        return self.qrels
 
     def _sample_docs(self, rel_doc_ids: set[str], sample_docs: int) -> str:
         if len(rel_doc_ids) == 0:
@@ -162,8 +157,7 @@ class Robust(Dataset):
 
         sampled_doc_texts = []
         for doc_id in random.sample(rel_doc_ids, min(sample_docs, len(rel_doc_ids))):
-            sampled_doc_texts.append(self.store.get(
-                doc_id).body.replace("\n", " ")[:10000])
+            sampled_doc_texts.append(self._get_document_text(doc_id))
         joined_docs = "\n\n".join(sampled_doc_texts)
         return joined_docs
 
@@ -174,10 +168,61 @@ class Robust(Dataset):
             if not qrels_map.get(qrel.query_id):
                 qrels_map[qrel.query_id] = []
             if qrel.relevance > 0:
-                doc = self.store.get(qrel.doc_id)
                 qrels_map[qrel.query_id].append(
-                    doc.body.replace("\n", " ")[:10000])
+                    self._get_document_text(qrel.doc_id))
         return qrels_map
+
+    def topic_components(self) -> Dict[str, Union[pd.DataFrame, List]]:
+        """Return the components needed to generate a topic."""
+        return None
+
+    def qrel_components(self, k: Optional[int] = None, s: bool = False, topics: bool = None) -> Dict[str, List]:
+        # Overwrite topics if provided
+        if topics is not None:
+            self.topics = topics
+
+        # Use pre sampled qrels
+        if s:
+            self.qrels = self.get_presampled_qrels()
+
+        # Remove topics that were never judged
+        self.qrels = self.qrels[self.qrels["query_id"].isin(
+            self.topics["query_id"])]
+
+        # sample k qrels per relevance label
+        if k:
+            sampled = []
+            for _, group in self.qrels.groupby("relevance"):
+                sampled.append(group.sample(n=k, random_state=42))
+            # maintain original order
+            self.qrels = pd.concat(sampled).sort_index()
+
+        qrels_extended = self.qrels.merge(
+            self.topics, left_on="query_id", right_on="query_id")
+        qrels_extended["doc"] = qrels_extended.apply(
+            lambda r: self._get_document_text(r.doc_id), axis=1)
+
+        if "narrative" not in qrels_extended.columns:
+            qrels_extended["narrative"] = ""
+        if "description" not in qrels_extended.columns:
+            qrels_extended["description"] = ""
+
+        return {
+            "document": qrels_extended["doc"].to_list(),
+            "query": qrels_extended["title"].to_list(),
+            "narrative": qrels_extended["narrative"].to_list(),
+            "description": qrels_extended["description"].to_list(),
+            "qrels": self.qrels,
+        }
+
+
+class Robust(Dataset):
+    def __init__(self):
+        dataset = ir_datasets.load("disks45/nocr/trec-robust-2004")
+        super().__init__("robust", dataset)
+
+    def get_presampled_qrels(self) -> pd.DataFrame:
+        return get_DNA_qrels()
 
     def get_rel_docs(self, query_id: str) -> list:
         """Get relevant documents for a given query ID."""
@@ -195,11 +240,18 @@ class Robust(Dataset):
     def topic_components(self, sample_queries: int, ndocspos: int, ndocsneg: int, seed: Optional[int] = 42, k: Optional[int] = None, s: Optional[bool] = False) -> Dict[str, List]:
         """Return the components of the topics as lists."""
         random.seed(seed)
-        if s:
-            sampled_qrels = get_DNA_qrels()
-            sampled_qrels = set(sampled_qrels["query_id"].to_list())
 
-        qrels = pd.DataFrame(self.dataset.qrels)
+        if s:
+            sampled_qrels = self.get_presampled_qrels()
+
+            # remove sampled qrels from original qrels to avoid traioning on judged docs
+            cols = ["query_id", "doc_id"]
+            index_df = self.qrels.set_index(cols).index
+            index_df2 = sampled_qrels.set_index(cols).index
+
+            self.qrels = self.qrels[~index_df.isin(index_df2)]
+
+            sampled_qrels = set(sampled_qrels["query_id"].to_list())
 
         qids = []
         titles = []
@@ -211,22 +263,24 @@ class Robust(Dataset):
 
         uqv = self._load_query_variants()
         for idx, query in enumerate(self.dataset.queries_iter()):
-            if s and query.query_id not in sampled_qrels:
+            if s and query.query_id not in sampled_qrels:  # topic not judged in sample qrels
                 continue
+
             # Query variants
+            # between 8 and 52 variants are available
             variants = uqv[uqv["qid"] == query.query_id]["uqv"].to_list()
             variants = random.sample(
                 variants, min(sample_queries, len(variants)))
             query_variants.append("\n".join(variants))
 
             # Rel Docs
-            rel_doc_ids = qrels[(qrels["query_id"] == query.query_id) & (
-                qrels["relevance"] > 0)]["doc_id"].to_list()
+            rel_doc_ids = self.qrels[(self.qrels["query_id"] == query.query_id) & (
+                self.qrels["relevance"] > 0)]["doc_id"].to_list()
             rel_docs.append(self._sample_docs(rel_doc_ids, ndocspos))
 
             # Not rel Docs
-            not_rel_doc_ids = qrels[(qrels["query_id"] == query.query_id) & (
-                qrels["relevance"] == 0)]["doc_id"].to_list()
+            not_rel_doc_ids = self.qrels[(self.qrels["query_id"] == query.query_id) & (
+                self.qrels["relevance"] == 0)]["doc_id"].to_list()
             not_rel_docs.append(self._sample_docs(
                 not_rel_doc_ids, ndocsneg))
 
@@ -249,44 +303,80 @@ class Robust(Dataset):
             "not_relevant_documents": not_rel_docs,
         }
 
-    def qrel_components(self, k: Optional[int] = None, s: bool = False, topics: bool = None) -> Dict[str, List]:
-        def add_doc_text(r):
-            doc = self.store.get(r.doc_id)
-            doc_str = doc.title + "\n" + doc.body
-            return doc_str[:10000].replace("\n", " ")
 
-        # Load custom topics file
-        if topics is not None:
-            queries = topics
-        else:
-            queries = pd.DataFrame(self.dataset.queries)
+class LongEval(Dataset):
+    def __init__(self):
+        dataset = load("longeval-2023/2022-09/en")
+        super().__init__("longeval", dataset)
 
-        qrels = pd.DataFrame(self.dataset.qrels)
+    def _load_query_variants(self):
+        """Load query variants from UQV dataset."""
+        return []
+
+    def topic_components(self, sample_queries: int, ndocspos: int, ndocsneg: int, seed: Optional[int] = 42, k: Optional[int] = None, s: Optional[bool] = False) -> Dict[str, List]:
+        random.seed(seed)
 
         if s:
-            # Overwrite qrels with DNA qrels
-            qrels = get_DNA_qrels()
+            sampled_qrels = self.get_presampled_qrels()
 
-        # remove potentially unused topics
-        qrels = qrels[qrels["query_id"].isin(queries["query_id"])]
+            # remove sampled qrels from original qrels to avoid traioning on judged docs
+            cols = ["query_id", "doc_id"]
+            index_df = self.qrels.set_index(cols).index
+            index_df2 = sampled_qrels.set_index(cols).index
 
-        # sample k qrels per relevance label
-        if k:
-            sampled = []
-            for _, group in qrels.groupby("relevance"):
-                sampled.append(group.sample(n=k, random_state=42))
-            qrels = pd.concat(sampled).sort_index()  # maintain original order
+            self.qrels = self.qrels[~index_df.isin(index_df2)]
 
-        qrels_extended = qrels.merge(
-            queries, left_on="query_id", right_on="query_id")
-        qrels_extended["doc"] = qrels_extended.apply(add_doc_text, axis=1)
+            sampled_qrels = set(sampled_qrels["query_id"].to_list())
+
+        qids = []
+        titles = []
+        descriptions = []
+        narratives = []
+        query_variants = []
+        rel_docs = []
+        not_rel_docs = []
+
+        uqv = self._load_query_variants()
+        for idx, topic in enumerate(self.topics.iterrows()):
+            # topic not judged in sample qrels
+            if s and topic["topic_id"] not in sampled_qrels:
+                continue
+
+            # Query variants
+            # between 8 and 52 variants are available
+            variants = uqv[uqv["qid"] == topic["topic_id"]]["uqv"].to_list()
+            variants = random.sample(
+                variants, min(sample_queries, len(variants)))
+            query_variants.append("\n".join(variants))
+
+            # Rel Docs
+            rel_doc_ids = self.qrels[(self.qrels["query_id"] == topic["topic_id"]) & (
+                self.qrels["relevance"] > 0)]["doc_id"].to_list()
+            rel_docs.append(self._sample_docs(rel_doc_ids, ndocspos))
+
+            # Not rel Docs
+            not_rel_doc_ids = self.qrels[(self.qrels["query_id"] == topic["topic_id"]) & (
+                self.qrels["relevance"] == 0)]["doc_id"].to_list()
+            not_rel_docs.append(self._sample_docs(
+                not_rel_doc_ids, ndocsneg))
+
+            # Other components
+            qids.append(topic["topic_id"])
+            titles.append(topic["text"])
+            descriptions.append("")
+            narratives.append("")
+
+            if k is not None and idx + 1 >= k:
+                break
 
         return {
-            "document": qrels_extended["doc"].to_list(),
-            "query": qrels_extended["title"].to_list(),
-            "narrative": qrels_extended["narrative"].to_list(),
-            "description": qrels_extended["description"].to_list(),
-            "qrels": qrels,
+            "query_ids": qids,
+            "title": titles,
+            "description": descriptions,
+            "narrative": narratives,
+            "queries": query_variants,
+            "relevant_documents": rel_docs,
+            "not_relevant_documents": not_rel_docs,
         }
 
 
@@ -333,95 +423,10 @@ def get_DNA_qrels():
     return qrels
 
 
-# class uqv_parser:
-#     def __init__(self):
-#         self.queries = []
-#         self.dataset = ir_datasets.load("disks45/nocr/trec-robust-2004")
-#         self.store = self.dataset.docs_store()
-
-#         self.qrels_map = self.make_qrels_map()
-
-#     def make_qrels_map(self):
-#         qrels_map = {}
-#         for qrel in self.dataset.qrels_iter():
-#             if not qrels_map.get(qrel.query_id):
-#                 qrels_map[qrel.query_id] = []
-#             if qrel.relevance > 0:
-#                 doc = self.store.get(qrel.doc_id)
-#                 qrels_map[qrel.query_id].append(doc.body.replace("\n", " "))
-#         return qrels_map
-
-#     def parse_variants(self):
-#         # variants
-#         uqv_path = DATA_DIR_RAW / "trec-reference" / "robust-uqv.txt"
-#         uqv = pd.read_csv(
-#             uqv_path, sep=";", names=["query_id", "uqv"]
-#         )
-#         uqv["qid"] = uqv["query_id"].apply(lambda x: x.split("-")[0])
-
-#         for query in self.dataset.queries_iter():
-#             variants = uqv[uqv["qid"] == query.query_id]["uqv"].to_list()
-
-#             self.queries.append(
-#                 {
-#                     "qid": query.query_id,
-#                     "title": query.title.replace("\n", " "),
-#                     "description": query.description.replace("\n", " "),
-#                     "narrative": query.narrative.replace("\n", " "),
-#                     "uqv": variants,
-#                     "rel_docs": self.qrels_map.get(query.query_id),
-#                 }
-#             )
-
-#         return self.queries
-
-
-# class ird_qrels_parser:
-#     def prepare_qrels(dataset_id: str, k: Optional[int] = None, s: bool = False, topics: bool = None):
-#         def add_doc_text(r):
-#             doc = store.get(r.doc_id)
-#             doc_str = doc.title + "\n" + doc.body
-#             return doc_str[:10000].replace("\n", " ")
-
-#         dataset = ir_datasets.load(dataset_id)
-#         store = dataset.docs_store()
-
-#         # Load custom topics file
-#         if isinstance(topics, pd.DataFrame):
-#             queries = topics
-#         else:
-#             queries = pd.DataFrame(dataset.queries)
-
-#         qrels = pd.DataFrame(dataset.qrels)
-
-#         # remove potentially unused topics
-#         qrels = qrels[qrels["query_id"].isin(queries["query_id"])]
-
-#         if s:
-#             # Overwrite qrels with DNA qrels
-#             qrels = get_DNA_qrels()
-
-#         # sample k qrels per relevance label
-#         if k:
-#             sampled = []
-#             for _, group in qrels.groupby("relevance"):
-#                 sampled.append(group.sample(n=k, random_state=42))
-#             qrels = pd.concat(sampled).sort_index()  # maintain original order
-
-#         qrels_extended = qrels.merge(
-#             queries, left_on="query_id", right_on="query_id")
-#         qrels_extended["doc"] = qrels_extended.apply(add_doc_text, axis=1)
-
-#         documents = qrels_extended["doc"].to_list()
-#         titles = qrels_extended["title"].to_list()
-#         narratives = qrels_extended["narrative"].to_list()
-#         descriptions = qrels_extended["description"].to_list()
-
-#         return documents, titles, narratives, descriptions, qrels
-
-
 def get_dataset(dataset_name: str):
     if dataset_name == "robust":
         return Robust()
+    # if dataset_name == "longeval":
+    #     return LongEval()
     else:
         raise ValueError(f"Dataset {dataset_name} is not supported.")

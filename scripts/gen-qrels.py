@@ -8,7 +8,7 @@ Example usage:
 import os
 import pandas as pd
 import json
-import datetime
+from datetime import datetime
 import click
 import time
 from pathlib import Path
