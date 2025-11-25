@@ -16,12 +16,14 @@
 		"ghcr.io/devcontainers-extra/features/poetry:2": {}
 	},
 	"mounts": [
-		"source=/mnt/datadisk2/projects_irg/jueri/ir_datasets,target=/workspaces/${localWorkspaceFolderBasename}/data/raw/ir_datasets,type=bind",
-		"source=/mnt/datadisk2/projects_irg/jueri/datasets,target=/workspaces/${localWorkspaceFolderBasename}/data/raw/datasets,type=bind"
+		"source=/mnt/datadisk2/projects_irg/jueri/resources/ir_datasets,target=/workspaces/${localWorkspaceFolderBasename}/data/raw/ir_datasets,type=bind",
+		"source=/mnt/datadisk2/projects_irg/jueri/resources/datasets,target=/workspaces/${localWorkspaceFolderBasename}/data/raw/datasets,type=bind",
+		"source=/mnt/datadisk2/projects_irg/jueri/resources/models,target=/workspaces/${localWorkspaceFolderBasename}/data/raw/models,type=bind"
 	],
 	"containerEnv": {
 		"IR_DATASETS_HOME": "/workspaces/${localWorkspaceFolderBasename}/data/raw/ir_datasets",
-		"IR_DATASETS_TMP": "/workspaces/${localWorkspaceFolderBasename}/data/raw/ir_datasets"
+		"IR_DATASETS_TMP": "/workspaces/${localWorkspaceFolderBasename}/data/raw/ir_datasets",
+		"HF_HOME": "/workspaces/${localWorkspaceFolderBasename}/data/raw/models/huggingface"
 	},
 	"customizations": {
 		// Configure properties specific to VS Code.
