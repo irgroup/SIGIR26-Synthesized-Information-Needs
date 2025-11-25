@@ -1,15 +1,10 @@
 from langchain.chat_models import init_chat_model
-from typing import Optional
 from langchain_openai import ChatOpenAI
 from topic_gen import logger
-from langchain_community.llms import VLLM
-import os
 from src.data import MODELS_DIR
 
-import torch
 
-
-def get_llm_qwen3_14B_MT100_no_think(connection: str, gpus: str = "0"):
+def get_llm_qwen3_14B_MT100_no_think(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
         openai_api_key="not-needed",
@@ -19,7 +14,7 @@ def get_llm_qwen3_14B_MT100_no_think(connection: str, gpus: str = "0"):
     )
 
 
-def get_llm_qwen3_14B_no_think(connection: str, gpus: str = "0"):
+def get_llm_qwen3_14B_no_think(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
         openai_api_key="not-needed",
@@ -29,7 +24,7 @@ def get_llm_qwen3_14B_no_think(connection: str, gpus: str = "0"):
     )
 
 
-def get_llm_qwen3_30B_MT100_no_think(connection: str, gpus: str = "0"):
+def get_llm_qwen3_30B_MT100_no_think(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
         openai_api_key="not-needed",
@@ -39,7 +34,7 @@ def get_llm_qwen3_30B_MT100_no_think(connection: str, gpus: str = "0"):
     )
 
 
-def get_llm_qwen3_30B_no_think(connection: str, gpus: str = "0"):
+def get_llm_qwen3_30B_no_think(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
         openai_api_key="not-needed",
@@ -49,7 +44,7 @@ def get_llm_qwen3_30B_no_think(connection: str, gpus: str = "0"):
     )
 
 
-def get_llm_gpt_oss_20B(connection: str, gpus: str = "0"):
+def get_llm_gpt_oss_20B(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
         openai_api_key="not-needed",
@@ -57,7 +52,7 @@ def get_llm_gpt_oss_20B(connection: str, gpus: str = "0"):
     )
 
 
-def get_llm_gpt_oss_120B(connection: str, gpus: str = "0"):
+def get_llm_gpt_oss_120B(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
         openai_api_key="not-needed",
@@ -67,7 +62,7 @@ def get_llm_gpt_oss_120B(connection: str, gpus: str = "0"):
     )
 
 
-def get_llm_gpt_oss_120B_MT1000(connection: str, gpus: str = "0"):
+def get_llm_gpt_oss_120B_MT1000(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
         openai_api_key="not-needed",
@@ -77,7 +72,7 @@ def get_llm_gpt_oss_120B_MT1000(connection: str, gpus: str = "0"):
     )
 
 
-def get_llm_gemeni_flash(connection=None, gpus: str = "0"):
+def get_llm_gemeni_flash(connection=None):
     return init_chat_model(
         model="gemini-2.5-flash",
         model_provider="google_genai",
@@ -85,7 +80,7 @@ def get_llm_gemeni_flash(connection=None, gpus: str = "0"):
     )
 
 
-def get_llm_deepseek(connection=None, gpus: str = "0"):
+def get_llm_deepseek(connection=None):
     return init_chat_model(
         model="deepseek-chat",
         model_provider="deepseek",
@@ -93,11 +88,13 @@ def get_llm_deepseek(connection=None, gpus: str = "0"):
     )
 
 
-def get_llm_qwen3_30B_A3B_Instruct_2507_FP8(connection=None, gpus: str = "0"):
+def get_llm_qwen3_30B_A3B_Instruct_2507_FP8(connection=None):
+    from langchain_community.llms import VLLM
+    import torch
     # setup gpus
     logger.info(f"Cuda: {torch.cuda.is_available()}")
-    os.environ["CUDA_VISIBLE_DEVICES"] = gpus
-    os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
+    # os.environ["CUDA_VISIBLE_DEVICES"] = gpus
+    # os.environ["VLLM_WORKER_MULTIPROC_METHOD"] = "spawn"
     logger.info(f"Number of GPUs: {torch.cuda.device_count()}")
 
     # load model
@@ -117,7 +114,7 @@ def get_llm_qwen3_30B_A3B_Instruct_2507_FP8(connection=None, gpus: str = "0"):
 
 
 # register LLM connections
-def get_llm(llm_name: str, connection: str, gpus: str):
+def get_llm(llm_name: str, connection: str):
     llm_connections = {
         "qwen3-14B-MT100-no-think": get_llm_qwen3_14B_MT100_no_think,
         "qwen3-14B-no-think": get_llm_qwen3_14B_no_think,
@@ -135,4 +132,4 @@ def get_llm(llm_name: str, connection: str, gpus: str):
         raise ValueError(
             f"LLM {llm_name} is not supported. Available options: {list(llm_connections.keys())}"
         )
-    return llm(connection=connection, gpus=gpus)
+    return llm(connection=connection)

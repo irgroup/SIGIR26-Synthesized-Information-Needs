@@ -3,7 +3,7 @@
 Generate TREC Topics
 
 Example usage:
-    python scripts/gen-qrels.py --model qwen3-14B-no-think --data robust --k 1 --s --prompt robust-DNA-zero-shot --output .
+    python scripts/gen-qrels.py --model qwen3-14B-no-think --data robust --k 1 --prompt robust-DNA-zero-shot --output .
 """
 import os
 import pandas as pd
@@ -29,16 +29,15 @@ logger.setLevel("DEBUG")
 @click.option("--model", help="The model to use. This must be registered in src/config.py", required=True, type=str)
 @click.option("--max_concurrency", help="Maximum number of concurrent requests.", default=50, type=int)
 @click.option("--connection", help="The connection string for the LLM.", default="http://localhost:6542/v1", type=str)
-@click.option("--gpus", help="CUDA_VISIBLE_DEVICES", default="0", type=str)
 # Generation options
 @click.option("--data", help="Test collection to be loaded", type=str, required=True)
 @click.option("--k", help="Generate results only for the first k samples.", default=None, type=int)
-@click.option("--s", help="Generate only the qrels used in the original paper.", is_flag=True, default=False)
 @click.option("--prompt", help="Prompt file path", type=click.Path(), required=True)
 @click.option("--topics", help="Topics file path", type=click.Path(), required=False, default=None)
 @click.option("--output", help="Output file path", type=click.Path(), default=".")
 @click.option("--no_compression", help="Compress output files", is_flag=True, default=False)
-def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, output, no_compression):
+@click.option("--all", help="Generate only the qrels used in the original paper.", is_flag=True, default=False)
+def main(model, max_concurrency, connection, data, k, prompt, topics, output, no_compression, all):
     # setup tracking
     timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     os.mkdir(Path(output) / timestamp)
@@ -46,7 +45,7 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, o
         output) / timestamp / "index-ir-metadata.yml")
 
     # Get LLM
-    llm = get_llm(model, connection=connection, gpus=gpus)
+    llm = get_llm(model, connection=connection)
 
     # load data
     if topics:
@@ -57,17 +56,20 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, o
         topics.rename(columns={"topic_id": "query_id"}, inplace=True)
     else:
         topics_metadata = {
-            "date": None,
-            "model": "trec assessors",
+            "date": timestamp,
+            "model": None,
             "data": data,
             "prompt": None,
             "k": k,
-            "s": s,
-            "task": "topics",
+            "nqueries": None,
+            "ndocspos": None,
+            "ndocsneg": None,
+            "output": output,
+            "task": "topics"
         }
 
     dataset = get_dataset(dataset_name=data)
-    components = dataset.qrel_components(k=k, s=s, topics=topics)
+    components = dataset.qrel_components(k=k, all=all, topics=topics)
     qrels = components.pop("qrels", None)
 
     # Setup generator
@@ -105,8 +107,8 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, topics, o
             "data": data,
             "prompt": prompt,
             "k": k,
-            "s": s,
             "topics": topics_metadata,
+            "output": output,
             "task": "qrels",
         }, f)
 
@@ -128,7 +130,6 @@ if __name__ == "__main__":
     #         "--data", "robust",
     #         "--connection", "http://localhost:6543/v1",
     #         "--k", "1",
-    #         "--s",
     #         "--prompt", "-DNA-zero-shot",
     #         "--output", ".",
     #         "--no_compression",

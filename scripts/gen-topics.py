@@ -28,17 +28,15 @@ logger.setLevel("DEBUG")
 @click.option("--model", help="The model to use. This must be registered in src/config.py", required=True, type=str)
 @click.option("--max_concurrency", help="Maximum number of concurrent requests.", default=50, type=int)
 @click.option("--connection", help="The connection string for the LLM.", default="http://localhost:6544/v1", type=str)
-@click.option("--gpus", help="CUDA_VISIBLE_DEVICES", default="0", type=str)
 # Generation options
 @click.option("--data", help="Test collection to be loaded", type=str, required=True)
 @click.option("--k", help="Generate results only for the first k samples.", default=None, type=int)
-@click.option("--s", help="Generate only the qrels used in the original paper.", is_flag=True, default=False)
 @click.option("--prompt", help="Prompt file path", type=click.Path(), required=True)
-@click.option("--nqueries", help="Number of query variants.", default=5, type=int)
-@click.option("--ndocspos", help="Number of relevant documents.", default=3, type=int)
-@click.option("--ndocsneg", help="Number of non-relevant documents.", default=3, type=int)
+@click.option("--nqueries", help="Number of query variants.", default=0, type=int)
+@click.option("--ndocspos", help="Number of relevant documents.", default=0, type=int)
+@click.option("--ndocsneg", help="Number of non-relevant documents.", default=0, type=int)
 @click.option("--output", help="Output file path", type=click.Path(), default=".")
-def main(model, max_concurrency, connection, gpus, data, k, s, prompt, nqueries, ndocspos, ndocsneg, output):
+def main(model, max_concurrency, connection, data, k, prompt, nqueries, ndocspos, ndocsneg, output):
     # setup tracking
     timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     os.mkdir(Path(output) / timestamp)
@@ -46,13 +44,13 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, nqueries,
         output) / timestamp / "index-ir-metadata.yml")
 
     # Get LLM
-    llm = get_llm(model, connection=connection, gpus=gpus)
+    llm = get_llm(model, connection=connection)
 
     # Load data
     dataset = get_dataset(dataset_name=data)
 
     components = dataset.topic_components(
-        k=k, sample_queries=nqueries, ndocspos=ndocspos, ndocsneg=ndocsneg, s=s)
+        k=k, nqueries=nqueries, ndocspos=ndocspos, ndocsneg=ndocsneg)
 
     # determine output class
     output_class = alter_class(prompt, dataset.topic_class)
@@ -79,14 +77,11 @@ def main(model, max_concurrency, connection, gpus, data, k, s, prompt, nqueries,
     # Save output
     with open(Path(output) / timestamp / "metadata.json", "w") as f:
         json.dump({
-            "time": timestamp,
+            "date": timestamp,
             "model": model,
-            "max_concurrency": max_concurrency,
-            "connection": connection,
-            "gpus": gpus,
             "data": data,
-            "k": k,
             "prompt": prompt,
+            "k": k,
             "nqueries": nqueries,
             "ndocspos": ndocspos,
             "ndocsneg": ndocsneg,

@@ -2,12 +2,12 @@ import datetime
 import json
 import os
 from pathlib import Path
-from src.data import DATA_DIR_PROCESSED, get_DNA_qrels
+from src.data import DATA_DIR_PROCESSED, get_dataset
 
 
 def parse_original_dna_qrels():
-    qrels = get_DNA_qrels()
-
+    robust = get_dataset("robust")
+    qrels = robust._sample_test_qrels()
     output = DATA_DIR_PROCESSED / "qrels"
 
     # Save output
