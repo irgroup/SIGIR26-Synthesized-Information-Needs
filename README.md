@@ -18,7 +18,7 @@
 
 
 
-## Generating Topics for Robust
+## 2 Generating Topics for Robust
 ||Data|Script|Status|
 |---|---|---|---|
 |Topics| [robust-topics](./data/interim/qrels-robust-topics-generated) | [topics-robust-topics.sh](./scripts/topics-robust-topics.sh) |DONE|
@@ -27,14 +27,16 @@
 
 
 
-#### Alignment
+### 2.1 **Alignment:** How well align generated qrels based on generated topics with the original qrels?
 [Evaluation](./notebooks/evaluate-alignment.ipynb) 
 
 
-## Clarity
+### 2.2 **Clarity:** How is the agreement between different generated qrels using the generated topics?
 [Evaluation](./notebooks/evaluate-clarity.ipynb)
 
 
 
-## Distinguishability
+### 2.3 **Distinguishability**: How well can the generated qrels based on generated topics differentiate between retrieval systems?
 [Evaluation](./notebooks/evaluate-distinguishability.ipynb)
+
+
