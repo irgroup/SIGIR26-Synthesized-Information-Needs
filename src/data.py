@@ -58,6 +58,7 @@ def load_qrels_from_path(qrels_path: Union[str, Path]) -> Tuple[List[pd.DataFram
             logger.warning(
                 f"Metadata not found for result {result}, skipping...")
             continue
+
         # predictions
         qrels = ir_measures.read_trec_qrels(
             os.path.join(qrels_path, result, "qrels.csv.gz"))
@@ -231,6 +232,10 @@ class Dataset:
         else:
             qrels = pd.DataFrame(self.dataset.qrels)
 
+        # ensure order of columns
+        qrels.rename(columns={"iteration": "q0"}, inplace=True)
+        qrels = qrels[["query_id", "q0", "doc_id", "relevance"]]
+
         # Remove topics that are not judged
         qrels = qrels[qrels["query_id"].isin(topics["query_id"])]
 
@@ -247,6 +252,14 @@ class Dataset:
         qrels_extended["doc"] = qrels_extended.apply(
             lambda r: self._get_document_text(r.doc_id), axis=1)
 
+        # determine query column
+        if "title" in qrels_extended.columns:
+            query_col = "title"
+        elif "text" in qrels_extended.columns:
+            query_col = "text"
+        else:
+            raise ValueError("No title or text column found in topics.")
+
         if "narrative" not in qrels_extended.columns:
             qrels_extended["narrative"] = ""
         if "description" not in qrels_extended.columns:
@@ -254,7 +267,7 @@ class Dataset:
 
         return {
             "document": qrels_extended["doc"].to_list(),
-            "query": qrels_extended["title"].to_list(),
+            "query": qrels_extended[query_col].to_list(),
             "narrative": qrels_extended["narrative"].to_list(),
             "description": qrels_extended["description"].to_list(),
             "qrels": qrels,
@@ -280,7 +293,7 @@ class Dataset:
         query_variants = []
         rel_docs = []
         not_rel_docs = []
-
+        notified = False
         for idx, query in enumerate(self.dataset.queries_iter()):
             # Skip topics not in test qrels
             if query.query_id not in test_query_ids:
@@ -311,6 +324,10 @@ class Dataset:
 
             # Query variants
             variants = self._sample_query_variants(query.query_id, nqueries)
+            if len(variants) == 0 and not notified:
+                logger.warning(
+                    f"No query variants available for this dataset. Returning only the original query.")
+                notified = True
             query_variants.append(title + "\n" + variants)
 
             # Rel Docs
@@ -413,9 +430,9 @@ class LongEval(Dataset):
         super().__init__(dataset)
 
 
-class DL22(Dataset):
+class DL21(Dataset):
     def __init__(self):
-        dataset = ir_datasets.load("msmarco-document-v2/trec-dl-2022/judged")
+        dataset = ir_datasets.load("msmarco-document-v2/trec-dl-2021/judged")
         super().__init__(dataset)
 
 
@@ -424,7 +441,7 @@ def get_dataset(dataset_name: str):
         return Robust()
     if dataset_name == "longeval":
         return LongEval()
-    if dataset_name == "trec-dl-2022":
-        return DL22()
+    if dataset_name == "trec-dl-2021":
+        return DL21()
     else:
         raise ValueError(f"Dataset {dataset_name} is not implemented.")

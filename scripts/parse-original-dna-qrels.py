@@ -8,7 +8,8 @@ from src.data import DATA_DIR_INTERIM, get_dataset
 def parse_original_dna_qrels():
     robust = get_dataset("robust")
     qrels = robust._sample_test_qrels()
-    output = DATA_DIR_INTERIM / "robust-reference"
+    # output = DATA_DIR_INTERIM / "robust-reference"
+    output = DATA_DIR_INTERIM / "qrels-robust-topics-generated"
 
     # Save output
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
@@ -22,7 +23,7 @@ def parse_original_dna_qrels():
             "k": None,
             "topics": {
                 "date": timestamp,
-                "model": "Human",
+                "model": "human",
                 "data": "robust",
                 "prompt": None,
                 "k": None,

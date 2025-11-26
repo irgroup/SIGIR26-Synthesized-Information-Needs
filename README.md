@@ -22,7 +22,7 @@
 ||Data|Script|Status|
 |---|---|---|---|
 |Topics| [robust-topics](./data/interim/qrels-robust-topics-generated) | [topics-robust-topics.sh](./scripts/topics-robust-topics.sh) |DONE|
-|Qrels| [qrels-robust-topics-generated](./data/interim/qrels-robust-topics-generated) | [qrels-robust-topics-generated.sh](./scripts/qrels-robust-topics-generated.sh) |WIP|
+|Qrels| [qrels-robust-topics-generated](./data/interim/qrels-robust-topics-generated) | [qrels-robust-topics-generated.sh](./scripts/qrels-robust-topics-generated.sh) |DONE|
 
 Prompts:
 - [query](./data/raw/prompts/topic-query.yaml): Query(-variants) only 
@@ -47,3 +47,17 @@ Prompts:
 [Evaluation](./notebooks/evaluate-distinguishability.ipynb)
 
 
+## 3 Generating Topics for TREC DL 2021 (Document)
+
+Reference:
+||Data|Script|Status|
+|---|---|---|---|
+|Topics| TREC | - |-|
+|Qrels| [qrels-dl21-reference](./data/interim/qrels-dl21-reference/) |[qrels-dl21-reference.sh](./scripts/qrels-dl21-reference.sh)|WIP|
+
+Experimental:
+
+||Data|Script|Status|
+|---|---|---|---|
+|Topics| [topics-dl21](./data/interim/topics-dl21) | [topics-dl21.sh](./scripts/topics-dl21.sh) ||
+|Qrels| [qrels-dl21-topics-generated](./data/interim/qrels-dl21-topics-generated) | [qrels-dl21-topics-generated.sh](./scripts/qrels-dl21-topics-generated.sh) ||
