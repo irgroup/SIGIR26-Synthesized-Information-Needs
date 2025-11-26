@@ -2,13 +2,13 @@ import datetime
 import json
 import os
 from pathlib import Path
-from src.data import DATA_DIR_PROCESSED, get_dataset
+from src.data import DATA_DIR_INTERIM, get_dataset
 
 
 def parse_original_dna_qrels():
     robust = get_dataset("robust")
     qrels = robust._sample_test_qrels()
-    output = DATA_DIR_PROCESSED / "qrels"
+    output = DATA_DIR_INTERIM / "robust-reference"
 
     # Save output
     timestamp = datetime.datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
@@ -20,16 +20,19 @@ def parse_original_dna_qrels():
             "data": "robust",
             "prompt": "-DNA-zero-shot",
             "k": None,
-            "s": True,
             "topics": {
-                "date": None,
-                "model": "trec assessors",
+                "date": timestamp,
+                "model": "Human",
                 "data": "robust",
                 "prompt": None,
                 "k": None,
-                "s": True,
-                "task": "topics",
+                "nqueries": None,
+                "ndocspos": None,
+                "ndocsneg": None,
+                "output": output.as_posix(),
+                "task": "topics"
             },
+            "output": output.as_posix(),
             "task": "qrels",
         }, f)
 
