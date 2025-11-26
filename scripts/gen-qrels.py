@@ -57,9 +57,9 @@ def main(model, max_concurrency, connection, data, k, prompt, topics, output, no
     else:
         topics_metadata = {
             "date": timestamp,
-            "model": None,
+            "model": "human",
             "data": data,
-            "prompt": None,
+            "prompt": "human",
             "k": k,
             "nqueries": None,
             "ndocspos": None,
