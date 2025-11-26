@@ -24,7 +24,14 @@
 |Topics| [robust-topics](./data/interim/qrels-robust-topics-generated) | [topics-robust-topics.sh](./scripts/topics-robust-topics.sh) |DONE|
 |Qrels| [qrels-robust-topics-generated](./data/interim/qrels-robust-topics-generated) | [qrels-robust-topics-generated.sh](./scripts/qrels-robust-topics-generated.sh) |WIP|
 
-
+Prompts:
+- [query](./data/raw/prompts/topic-query.yaml): Query(-variants) only 
+- [docs-pos](./data/raw/prompts/topic-docs-pos.yaml): Relevant Documents
+- [docs-neg](./data/raw/prompts/topic-docs-neg.yaml): Non-Relevant Documents
+- [query-docs-pos](./data/raw/prompts/topic-query-docs-pos.yaml): Query(-variants) + Relevant Documents
+- [query-docs-neg](./data/raw/prompts/topic-query-docs-neg.yaml): Query(-variants) + Non-Relevant Documents
+- [contrastive](./data/raw/prompts/topic-contrastive.yaml): Relevant + Non-Relevant Documents
+- [query-contrastive](./data/raw/prompts/topic-query-contrastive.yaml): Query(-variants) + Relevant + Non-Relevant Documents
 
 
 ### 2.1 **Alignment:** How well align generated qrels based on generated topics with the original qrels?
