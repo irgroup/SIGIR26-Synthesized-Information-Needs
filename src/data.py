@@ -46,6 +46,9 @@ def load_qrels_from_path(qrels_path: Union[str, Path]) -> Tuple[List[pd.DataFram
     metadata_records = []
 
     for result in os.listdir(qrels_path):
+        if not os.path.isdir(os.path.join(qrels_path, result)):
+            continue
+
         # metadata
         try:
             with open(os.path.join(qrels_path, result, "metadata.json")) as f:
@@ -283,9 +286,32 @@ class Dataset:
             if query.query_id not in test_query_ids:
                 continue
 
+            # Title
+            if hasattr(query, "title"):
+                title = query.title.replace("\n", " ")
+
+            elif hasattr(query, "text"):
+                title = query.text.replace("\n", " ")
+            else:
+                title = ""
+
+            titles.append(title)
+
+            # Description
+            if hasattr(query, "description"):
+                descriptions.append(query.description.replace("\n", " "))
+            else:
+                descriptions.append("")
+
+            # Narrative
+            if hasattr(query, "narrative"):
+                narratives.append(query.narrative.replace("\n", " "))
+            else:
+                narratives.append("")
+
             # Query variants
-            query_variants.append(
-                self._sample_query_variants(query.query_id, nqueries))
+            variants = self._sample_query_variants(query.query_id, nqueries)
+            query_variants.append(title + "\n" + variants)
 
             # Rel Docs
             rel_doc_ids = qrels[(qrels["query_id"] == query.query_id) & (
@@ -300,26 +326,6 @@ class Dataset:
 
             # Query ID
             qids.append(query.query_id)
-
-            # Title
-            if hasattr(query, "title"):
-                titles.append(query.title.replace("\n", " "))
-            elif hasattr(query, "text"):
-                titles.append(query.text.replace("\n", " "))
-            else:
-                titles.append("")
-
-            # Description
-            if hasattr(query, "description"):
-                descriptions.append(query.description.replace("\n", " "))
-            else:
-                descriptions.append("")
-
-            # Narrative
-            if hasattr(query, "narrative"):
-                narratives.append(query.narrative.replace("\n", " "))
-            else:
-                narratives.append("")
 
             if k is not None and idx + 1 >= k:
                 break
@@ -393,7 +399,7 @@ class Robust(Dataset):
 
     def _load_uqv(self):
         """Load query variants from UQV dataset."""
-        uqv_path = DATA_DIR_RAW / "trec-reference" / "robust-uqv.txt"
+        uqv_path = DATA_DIR_RAW / "datasets" / "robust" / "robust-uqv.txt"
         uqv = pd.read_csv(
             uqv_path, sep=";", names=["query_id", "uqv"]
         )
