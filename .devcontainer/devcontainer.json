@@ -13,7 +13,9 @@
 		"--network=host"
 	],
 	"features": {
-		"ghcr.io/devcontainers-extra/features/poetry:2": {}
+		"ghcr.io/devcontainers-extra/features/poetry:2": {
+			"version": "2.0.1"
+		}
 	},
 	"mounts": [
 		"source=/mnt/datadisk2/projects_irg/jueri/resources/ir_datasets,target=/workspaces/${localWorkspaceFolderBasename}/data/raw/ir_datasets,type=bind",

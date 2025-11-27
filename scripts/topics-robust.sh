@@ -1,10 +1,9 @@
 # Generate topics based on a variety of prompts and contexts for robust
 
 MODEL=qwen3-30B-no-think
+# MODEL=gpt-oss-120B
 DATASET=robust
-CONNECTION=http://localhost:6542/v1
-OUTPUT=../data/interim/robust-gen-topics
-
+CONNECTION=http://localhost:6543/v1
 
 # topic-query.yaml: Query
 PROMPT=../data/raw/prompts/topic-query.yaml

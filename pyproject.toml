@@ -15,8 +15,10 @@ dependencies = [
   "seaborn (>=0.13.2,<0.14.0)",
   "sentence-transformers (>=5.1.1,<6.0.0)",
   "bert-score (>=0.3.13,<0.4.0)",
-  "ir-datasets-longeval @ git+https://git@github.com/clef-longeval/ir-datasets-longeval.git",
   "tirex-tracker (>=0.2.16,<0.3.0)",
+  "statsmodels (>=0.14.5,<0.15.0)",
+  "ir-datasets-longeval @ git+https://github.com/clef-longeval/ir-datasets-longeval.git@main",
+  "krippendorff (>=0.8.2,<0.9.0)",
 ]
 description = ""
 name = "src"

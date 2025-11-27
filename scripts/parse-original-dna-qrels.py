@@ -37,8 +37,7 @@ def parse_original_dna_qrels():
             "task": "qrels",
         }, f)
 
-    qrels.to_csv(output / timestamp / "qrels.csv.gz", index=False, header=False,
-                 sep=" ", compression="gzip")
+    qrels.to_csv(output / timestamp / "qrels.csv.gz", index=False, header=False, sep=" ", compression="gzip")
 
 
 if __name__ == "__main__":
