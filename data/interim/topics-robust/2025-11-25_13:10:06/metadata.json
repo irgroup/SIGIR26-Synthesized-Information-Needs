@@ -1,0 +1,1 @@
+{"date": "2025-11-25_13:10:06", "model": "qwen3-30B-no-think", "data": "robust", "prompt": "../data/raw/prompts/topic-query.yaml", "k": null, "nqueries": 7, "ndocspos": 0, "ndocsneg": 0, "output": "../data/interim/robust-gen-topics", "task": "topics"}
