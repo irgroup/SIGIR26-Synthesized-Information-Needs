@@ -1,0 +1,36 @@
+_type: prompt
+topic_type: TREC
+input_variables:
+- queries
+- relevant_documents
+- not_relevant_documents
+
+template: 'Given some user queries, relevant and not relevant documents, you must provide a TREC-style topic that simulates a nuanced user information need.
+
+  The topic must include the following fields: title, description, and narrative. The title should be a brief, 2-4 word label for the topic. The description should clearly summarize the users information goal in one sentence or a question. The narrative should be a short statement that explains the users intent and the criteria for relevance.
+
+
+  Query  
+
+  A person has typed these queries into a search engine:
+
+  {queries}
+
+
+  — BEGIN RELEVANT DOCUMENTS CONTENT - 
+
+  {relevant_documents}
+
+  — END RELEVANT DOCUMENTS CONTENT - 
+
+
+  — BEGIN NOT RELEVANT DOCUMENTS CONTENT - 
+
+  {not_relevant_documents}
+
+  — END NOT RELEVANT DOCUMENTS CONTENT - 
+
+
+  Output Format and Structure:
+
+  {format_instructions}'

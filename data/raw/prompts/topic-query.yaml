@@ -1,0 +1,20 @@
+_type: prompt
+topic_type: TREC
+input_variables:
+- queries
+
+template: 'Given some user queries, you must provide a TREC-style topic that simulates a nuanced user information need.
+
+  The topic must include the following fields: title, description, and narrative. The title should be a brief, 2-4 word label for the topic. The description should clearly summarize the users information goal in one sentence or a question. The narrative should be a short statement that explains the users intent and the criteria for relevance.
+
+
+  Query  
+
+  A person has typed these queries into a search engine:
+
+  {queries}
+
+
+  Output Format and Structure:
+
+  {format_instructions}'
