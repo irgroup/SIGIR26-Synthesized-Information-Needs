@@ -6,7 +6,7 @@ import ir_datasets
 import pandas as pd
 from typing import Optional, Union, List, Dict, Tuple
 import json
-from topic_gen.models import MTO_responds, TRECTopic, BaseTopic
+from topic_gen.models import MTO_responds, TRECTopic, BaseTopic, Topics
 import random
 from pydantic import BaseModel, create_model
 from topic_gen import logger
@@ -29,11 +29,12 @@ MODELS_DIR = str(DATA_DIR_RAW / "datasets" / "cache")
 def metadata_to_table(metadata_records: List[Dict]) -> pd.DataFrame:
     # metadata table
     metadata = pd.DataFrame(metadata_records)
-    metadata = metadata.join(pd.json_normalize(
-        metadata["topics"]).add_prefix("topics_"))
-    metadata.drop(columns=["topics"], inplace=True)
-    metadata["topics_prompt"] = metadata["topics_prompt"].apply(
-        lambda p: str(Path(p).stem) if pd.notnull(p) else "human")
+    if "topics" in metadata.columns:
+        metadata = metadata.join(pd.json_normalize(
+            metadata["topics"]).add_prefix("topics_"))
+        metadata.drop(columns=["topics"], inplace=True)
+        metadata["topics_prompt"] = metadata["topics_prompt"].apply(
+            lambda p: str(Path(p).stem) if pd.notnull(p) else "human")
     metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
     metadata["model"] = metadata["model"].str.replace("-MT1000", "")
     metadata["model"] = metadata["model"].str.replace("-MT100", "")
@@ -63,6 +64,36 @@ def load_qrels_from_path(qrels_path: Union[str, Path]) -> Tuple[List[pd.DataFram
         qrels = ir_measures.read_trec_qrels(
             os.path.join(qrels_path, result, "qrels.csv.gz"))
         predictions.append(qrels)
+        # names
+        names.append(result)
+
+    return predictions, names, metadata_to_table(metadata_records)
+
+
+def load_topics_from_path(topics_path: Union[str, Path], topics_class=TRECTopic) -> Tuple[List[pd.DataFrame], List[str], List[Dict]]:
+    predictions = []
+    names = []
+    metadata_records = []
+
+    for result in os.listdir(topics_path):
+        if not os.path.isdir(os.path.join(topics_path, result)):
+            continue
+
+        # metadata
+        try:
+            with open(os.path.join(topics_path, result, "metadata.json")) as f:
+                metadata = json.load(f)
+            metadata_records.append(metadata)
+        except FileNotFoundError:
+            logger.warning(
+                f"Metadata not found for result {result}, skipping...")
+            continue
+
+        # predictions
+        topics = Topics[topics_class].read_jsonl(
+            topics_path / result / "topics.jsonl")
+        predictions.append(topics)
+
         # names
         names.append(result)
 

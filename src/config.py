@@ -58,7 +58,7 @@ def get_llm_gpt_oss_120B(connection: str):
         openai_api_key="not-needed",
         model_name="openai/gpt-oss-120b",
         extra_body={"chat_template_kwargs": {
-            "enable_thinking": False}, "max_tokens": 10000}
+            "enable_thinking": False}}
     )
 
 
@@ -70,6 +70,30 @@ def get_llm_gpt_oss_120B_MT1000(connection: str):
         extra_body={"chat_template_kwargs": {
             "enable_thinking": False}, "max_tokens": 1000}
     )
+
+
+def get_llm_gpt_oss_120B_MT1000_ollama(connection: str):
+    from langchain_ollama import ChatOllama
+    return ChatOllama(
+        base_url=connection,
+        model="gpt-oss:120b",
+        num_predict=1000
+    )
+    
+def get_llm_llama3_1_70b_instruct_q8_0_MT1000_ollama(connection: str):
+    from langchain_ollama import ChatOllama
+    return ChatOllama(
+        base_url=connection,
+        model="llama3.1:70b-instruct-q8_0",
+        num_predict=1000
+    )
+
+
+def get_llm_llama3_1_8B_instruct(connection: str):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="meta-llama/Llama-3.1-8B-Instruct")
 
 
 def get_llm_gemeni_flash(connection=None):
@@ -126,6 +150,9 @@ def get_llm(llm_name: str, connection: str):
         "gpt-oss-120B": get_llm_gpt_oss_120B,
         "gpt-oss-120B-MT1000": get_llm_gpt_oss_120B_MT1000,
         "deepseek-V3.2": get_llm_deepseek,
+        "llama3-1-8B-instruct": get_llm_llama3_1_8B_instruct,
+        "llama3-1-70B_instruct_q8_0_MT1000_ollama": get_llm_llama3_1_70b_instruct_q8_0_MT1000_ollama,
+        "gpt-oss-120B-MT1000-ollama": get_llm_gpt_oss_120B_MT1000_ollama,
     }
     llm = llm_connections.get(llm_name)
     if llm is None:
