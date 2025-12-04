@@ -79,13 +79,22 @@ def get_llm_gpt_oss_120B_MT1000_ollama(connection: str):
         model="gpt-oss:120b",
         num_predict=1000
     )
-    
+
+
 def get_llm_llama3_1_70b_instruct_q8_0_MT1000_ollama(connection: str):
     from langchain_ollama import ChatOllama
     return ChatOllama(
         base_url=connection,
         model="llama3.1:70b-instruct-q8_0",
         num_predict=1000
+    )
+
+
+def get_llm_llama3_1_70b_instruct_q8_0_ollama(connection: str):
+    from langchain_ollama import ChatOllama
+    return ChatOllama(
+        base_url=connection,
+        model="llama3.1:70b-instruct-q8_0"
     )
 
 
@@ -153,6 +162,7 @@ def get_llm(llm_name: str, connection: str):
         "llama3-1-8B-instruct": get_llm_llama3_1_8B_instruct,
         "llama3-1-70B_instruct_q8_0_MT1000_ollama": get_llm_llama3_1_70b_instruct_q8_0_MT1000_ollama,
         "gpt-oss-120B-MT1000-ollama": get_llm_gpt_oss_120B_MT1000_ollama,
+        "llama3-1-70B_instruct_q8_0_ollama": get_llm_llama3_1_70b_instruct_q8_0_ollama
     }
     llm = llm_connections.get(llm_name)
     if llm is None:
