@@ -1,28 +1,35 @@
 # conf26-Generating-Topics
 
+
+## Setup and Reproduction
+Install the dependencies listed in the [pyprojects.toml](./pyproject.toml) for example with poetry:
+`poetry install`
+
+
+
 ## 1 Pre Requisites
 [Evaluation](./notebooks/evaluate-pre-requisites.ipynb)
 
 ### 1.1 Can we reproduce the qrels quality by Thomas et al. with open models?
-||Data|Script|Qwen3-30B|GPT-OSS-120B|
-|---|---|---|---|---|
-|Topics| TREC | - |-| -|
-|Qrels| [qrels-robust-reference](./data/interim/qrels-robust-reference/) |[qrels-robust-reference.sh](./scripts/qrels-robust-reference.sh)| DONE | |
+||Data|Script|Qwen3-30B|gpt-oss-120B|gpt-oss-120B-ollama|gpt-oss-20B|llama3.1-8B-instruct|qwen3-14B|llama3.1-70B-instruct-q8_0|deepseek-V3.2|
+|---|---|---|---|---|---|---|---|---|---|---|
+|Topics| TREC | - | - | - | - | - | - | - | - | - |
+|Qrels| [qrels-robust-reference](./data/interim/qrels-robust-reference/) |[qrels-robust-reference.sh](./scripts/qrels-robust-reference.sh)| DONE | DONE |DONE | DONE |DONE | DONE | DONE |DONE|
 
 
 ### 1.2 How do different topic components influence the qrel generation?
-||Data|Script|Qwen3-30B|GPT-OSS-120B|
-|---|---|---|---|---|
-|Topics| TREC |-|-|-|
-|Qrels| [qrels-robust-topics-masked](./data/interim/qrels-robust-topics-masked/) |[qrels-robust-topics-masked.sh](./scripts/qrels-robust-topics-masked.sh)| DONE |  |
+||Data|Script|Qwen3-30B|gpt-oss-120B|gpt-oss-120B-ollama|gpt-oss-20B|llama3.1-8B-instruct|qwen3-14B|
+|---|---|---|---|---|---|---|---|---|
+|Topics| TREC | - | - | - | - | - | - | - |
+|Qrels| [qrels-robust-topics-masked](./data/interim/qrels-robust-topics-masked/) |[qrels-robust-topics-masked.sh](./scripts/qrels-robust-topics-masked.sh)| DONE |  |  |  |  |  |
 
 
 
 ## 2 Controled Setting: Robust Test Collection
-||Data|Script|Qwen3-30B|GPT-OSS-120B|
-|---|---|---|---|---|
-|Topics| [topics-robust](./data/interim/topics-robust) | [topics-robust.sh](./scripts/topics-robust.sh) |DONE|  |
-|Qrels| [qrels-robust-topics-generated](./data/interim/qrels-robust-topics-generated) | [qrels-robust-topics-generated.sh](./scripts/qrels-robust-topics-generated.sh) | DONE | |
+||Data|Script|Qwen3-30B|gpt-oss-120B|gpt-oss-120B-ollama|gpt-oss-20B|llama3.1-8B-instruct|qwen3-14B|llama3.1-70B-instruct-q8_0|deepseek-V3.2|
+|---|---|---|---|---|---|---|---|---|---|---|
+|Topics| [topics-robust](./data/interim/topics-robust) | [topics-robust.sh](./scripts/topics-robust.sh) |DONE| DONE |  | DONE |  | DONE | WIP |  | 
+|Qrels| [qrels-robust-topics-generated](./data/interim/qrels-robust-topics-generated) | [qrels-robust-topics-generated.sh](./scripts/qrels-robust-topics-generated.sh) | DONE |  |
 
 Prompts:
 - [query](./data/raw/prompts/topic-query.yaml): Query(-variants) only 
@@ -52,26 +59,10 @@ bash qrels-robust-reference.sh && bash qrels-robust-topics-masked.sh && bash top
 
 
 ## 3 Scenario Setting:
-### *3.1 TREC DL 2021 (Document)*
-
-**Reference:**
-||Data|Script|Qwen3-30B|GPT-OSS-120B|
-|---|---|---|---|---|
-|Topics| TREC | - |-|-|
-|Qrels| [qrels-dl21-reference](./data/interim/qrels-dl21-reference/) |[qrels-dl21-reference.sh](./scripts/qrels-dl21-reference.sh)|| |
 
 
-
-**Experimental:**
-||Data|Script|Qwen3-30B|GPT-OSS-120B|
-|---|---|---|---|---|
-|Topics| [topics-dl21](./data/interim/topics-dl21) | [topics-dl21.sh](./scripts/topics-dl21.sh) | | 
-|Qrels| [qrels-dl21-topics-generated](./data/interim/qrels-dl21-topics-generated) | [qrels-dl21-topics-generated.sh](./scripts/qrels-dl21-topics-generated.sh) |||
+### 3.1 LongEval-2023
+Between the human annotations and the click model qrels, some qrels overlap. For the 45 queries set 99 and for the 31 qrels set 134. I checked the alignment between both with Cohen's kappa and found that it is really low (0.07 and 0.06).
 
 
-### *3.2 LongEval-2023*
-- ...
-
-
-### ???
-
+### 3.2 TREC DL 2021 (Document)
