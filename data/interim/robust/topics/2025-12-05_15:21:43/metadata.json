@@ -1,0 +1,1 @@
+{"date": "2025-12-05_15:21:43", "model": "gpt-oss-120B-ollama", "data": "robust", "prompt": "../data/raw/prompts/topic-query-docs-pos.yaml", "k": null, "nqueries": 1, "ndocspos": 1, "ndocsneg": 0, "output": "../data/interim/topics-robust", "task": "topics"}
