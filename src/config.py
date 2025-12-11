@@ -72,12 +72,32 @@ def get_llm_gpt_oss_120B_MT1000(connection: str):
     )
 
 
+def get_llm_mistral3_14B_MT100(connection: str):
+    from langchain_mistralai import ChatMistralAI
+
+    return ChatMistralAI(
+        base_url=connection,
+        model="mistralai/Ministral-3-14B-Instruct-2512",
+        max_tokens=100,
+        model_kwargs={"chat_template_kwargs": {
+            "enable_thinking": False}}
+    )
+
+
 def get_llm_gpt_oss_120B_MT1000_ollama(connection: str):
     from langchain_ollama import ChatOllama
     return ChatOllama(
         base_url=connection,
         model="gpt-oss:120b",
         num_predict=1000
+    )
+
+
+def get_llm_gpt_oss_120B_ollama(connection: str):
+    from langchain_ollama import ChatOllama
+    return ChatOllama(
+        base_url=connection,
+        model="gpt-oss:120b"
     )
 
 
@@ -158,11 +178,13 @@ def get_llm(llm_name: str, connection: str):
         "gpt-oss-20B": get_llm_gpt_oss_20B,
         "gpt-oss-120B": get_llm_gpt_oss_120B,
         "gpt-oss-120B-MT1000": get_llm_gpt_oss_120B_MT1000,
+        "gpt-oss-120B-ollama": get_llm_gpt_oss_120B_ollama,
+        "gpt-oss-120B-MT1000-ollama": get_llm_gpt_oss_120B_MT1000_ollama,
         "deepseek-V3.2": get_llm_deepseek,
         "llama3-1-8B-instruct": get_llm_llama3_1_8B_instruct,
         "llama3-1-70B_instruct_q8_0_MT1000_ollama": get_llm_llama3_1_70b_instruct_q8_0_MT1000_ollama,
-        "gpt-oss-120B-MT1000-ollama": get_llm_gpt_oss_120B_MT1000_ollama,
-        "llama3-1-70B_instruct_q8_0_ollama": get_llm_llama3_1_70b_instruct_q8_0_ollama
+        "llama3-1-70B_instruct_q8_0_ollama": get_llm_llama3_1_70b_instruct_q8_0_ollama,
+        "mistral3-14B-MT100": get_llm_mistral3_14B_MT100,
     }
     llm = llm_connections.get(llm_name)
     if llm is None:
@@ -170,3 +192,23 @@ def get_llm(llm_name: str, connection: str):
             f"LLM {llm_name} is not supported. Available options: {list(llm_connections.keys())}"
         )
     return llm(connection=connection)
+
+
+LLM_NAMES = {
+    "qwen3-14B-MT100-no-think": "Qwen3-14B",
+    "qwen3-14B-no-think": "Qwen3-14B",
+    "qwen3-30B-MT100-no-think": "Qwen3-30B",
+    "qwen3-30B-no-think": "Qwen3-30B",
+    "gemini-2.5-flash": "Gemini-2.5-Flash",
+    "Qwen3-30B-A3B-Instruct-2507-FP8": "Qwen3-30B-A3B-Instruct-2507-FP8",
+    "gpt-oss-20B": "GPT-OSS-20B",
+    "gpt-oss-120B": "GPT-OSS-120B",
+    "gpt-oss-120B-MT1000": "GPT-OSS-120B",
+    "gpt-oss-120B-ollama": "GPT-OSS-120B",
+    "gpt-oss-120B-MT1000-ollama": "GPT-OSS-120B",
+    "deepseek-V3.2": "Deepseek-V3.2",
+    "llama3-1-8B-instruct": "Llama3.1-8B",
+    "llama3-1-70B_instruct_q8_0_MT1000_ollama": "Llama3.1-70B",
+    "llama3-1-70B_instruct_q8_0_ollama": "Llama3.1-70B",
+    "mistral3-14B-MT100": "Mistral3-14B",
+}
