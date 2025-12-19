@@ -42,6 +42,7 @@ def read_metadata(path: Path) -> pd.DataFrame:
                 metadata = json.load(f)
             metadata["model"] = LLM_NAMES.get(
                 metadata["model"], metadata["model"])
+
             metadata_records.append(metadata)
         except FileNotFoundError:
             logger.warning(
