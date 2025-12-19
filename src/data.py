@@ -488,12 +488,19 @@ class DL19(Dataset):
         dataset = ir_datasets.load("msmarco-passage/trec-dl-2019/judged")
         super().__init__(dataset)
 
+class DL20(Dataset):
+    def __init__(self):
+        dataset = ir_datasets.load("msmarco-passage/trec-dl-2020/judged")
+        super().__init__(dataset)
+
 
 def get_dataset(dataset_name: str):
     if dataset_name == "robust":
         return Robust()
     if dataset_name == "dl19":
         return DL19()
+    if dataset_name == "dl20":
+        return DL20()
     if dataset_name == "longeval-C-45":
         return LongEval_C_45()
     if dataset_name == "longeval-45-C":

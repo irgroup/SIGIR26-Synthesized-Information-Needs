@@ -44,6 +44,16 @@ def get_llm_qwen3_30B_no_think(connection: str):
     )
 
 
+def get_llm_qwen3_next_80B_fp8_no_think(connection: str):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="Qwen/Qwen3-Next-80B-A3B-Instruct-FP8",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}, "max_tokens": 10000}
+    )
+
+
 def get_llm_gpt_oss_20B(connection: str):
     return ChatOpenAI(
         openai_api_base=connection,
@@ -116,7 +126,15 @@ def get_llm_llama3_1_70b_instruct_q8_0_ollama(connection: str):
         base_url=connection,
         model="llama3.1:70b-instruct-q8_0"
     )
-
+    
+def get_llm_llama3_3_70b_instruct_q8(connection: str):
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model_name="RedHatAI/Llama-3.3-70B-Instruct-FP8-dynamic",
+        extra_body={"chat_template_kwargs": {
+            "enable_thinking": False}, "max_tokens": 10000}
+    )
 
 def get_llm_llama3_1_8B_instruct(connection: str):
     return ChatOpenAI(
@@ -184,7 +202,9 @@ def get_llm(llm_name: str, connection: str):
         "llama3-1-8B-instruct": get_llm_llama3_1_8B_instruct,
         "llama3-1-70B_instruct_q8_0_MT1000_ollama": get_llm_llama3_1_70b_instruct_q8_0_MT1000_ollama,
         "llama3-1-70B_instruct_q8_0_ollama": get_llm_llama3_1_70b_instruct_q8_0_ollama,
+        "llama3-3-70b_instruct_q8": get_llm_llama3_3_70b_instruct_q8,
         "mistral3-14B-MT100": get_llm_mistral3_14B_MT100,
+        "qwen3-80B-next-no-think": get_llm_qwen3_next_80B_fp8_no_think,
     }
     llm = llm_connections.get(llm_name)
     if llm is None:
@@ -195,20 +215,24 @@ def get_llm(llm_name: str, connection: str):
 
 
 LLM_NAMES = {
+    "llama3-1-8B-instruct": "Llama3.1-8B",
     "qwen3-14B-MT100-no-think": "Qwen3-14B",
     "qwen3-14B-no-think": "Qwen3-14B",
+    "mistral3-14B-MT100": "Mistral3-14B",
+    "gpt-oss-20B": "GPT-OSS-20B",
     "qwen3-30B-MT100-no-think": "Qwen3-30B",
     "qwen3-30B-no-think": "Qwen3-30B",
-    "gemini-2.5-flash": "Gemini-2.5-Flash",
     "Qwen3-30B-A3B-Instruct-2507-FP8": "Qwen3-30B-A3B-Instruct-2507-FP8",
-    "gpt-oss-20B": "GPT-OSS-20B",
     "gpt-oss-120B": "GPT-OSS-120B",
     "gpt-oss-120B-MT1000": "GPT-OSS-120B",
     "gpt-oss-120B-ollama": "GPT-OSS-120B-O",
     "gpt-oss-120B-MT1000-ollama": "GPT-OSS-120B-O",
-    "deepseek-V3.2": "Deepseek-V3.2",
-    "llama3-1-8B-instruct": "Llama3.1-8B",
     "llama3-1-70B_instruct_q8_0_MT1000_ollama": "Llama3.1-70B",
     "llama3-1-70B_instruct_q8_0_ollama": "Llama3.1-70B",
-    "mistral3-14B-MT100": "Mistral3-14B",
+    "llama3-3-70b_instruct_q8": "Llama3.3-70B",
+    "qwen3-80B-next-no-think": "Qwen3-Next-80B",
+    "deepseek-V3.2": "Deepseek-V3.2",
+    "gemini-2.5-flash": "Gemini-2.5-Flash",
 }
+
+
