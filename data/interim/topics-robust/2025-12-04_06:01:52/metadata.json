@@ -1,0 +1,1 @@
+{"date": "2025-12-04_06:01:52", "model": "llama3-1-70B_instruct_q8_0_ollama", "data": "robust", "prompt": "../data/raw/prompts/topic-query-contrastive.yaml", "k": null, "nqueries": 3, "ndocspos": 3, "ndocsneg": 3, "output": "../data/interim/topics-robust", "task": "topics"}
