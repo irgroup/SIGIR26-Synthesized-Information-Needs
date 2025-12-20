@@ -1,16 +1,16 @@
-import os
-from typing import Union, List, Dict, Tuple
-from topic_gen.evaluate import Experiment
-from topic_gen.evaluate.io import read_jsonl_topics
-from pathlib import Path
-from topic_gen.evaluate.utils import QrelsTransformer
-from src.config import LLM_NAMES
-import pandas as pd
 import json
-
-from topic_gen import logger
+import os
+from pathlib import Path
+from typing import Dict, List, Union
 
 import ir_measures
+import pandas as pd
+from topic_gen import logger
+from topic_gen.evaluate import Experiment
+from topic_gen.evaluate.io import read_jsonl_topics
+from topic_gen.evaluate.utils import QrelsTransformer
+
+from src.config import LLM_NAMES
 
 
 def load_topics_from_path(topics_path: Union[str, Path]) -> List[Experiment]:
@@ -20,8 +20,7 @@ def load_topics_from_path(topics_path: Union[str, Path]) -> List[Experiment]:
             continue
         try:
             exp = Experiment(
-                topics=read_jsonl_topics(
-                    topics_path / result / "topics.jsonl"),
+                topics=read_jsonl_topics(topics_path / result / "topics.jsonl"),
                 name=result,
             )
             experiments.append(exp)
@@ -40,13 +39,11 @@ def read_metadata(path: Path) -> pd.DataFrame:
         try:
             with open(os.path.join(path, result, "metadata.json")) as f:
                 metadata = json.load(f)
-            metadata["model"] = LLM_NAMES.get(
-                metadata["model"], metadata["model"])
+            metadata["model"] = LLM_NAMES.get(metadata["model"], metadata["model"])
 
             metadata_records.append(metadata)
         except FileNotFoundError:
-            logger.warning(
-                f"Metadata not found for result {result}, skipping...")
+            logger.warning(f"Metadata not found for result {result}, skipping...")
             continue
 
     metadata = pd.DataFrame(metadata_records)
@@ -58,22 +55,28 @@ def read_metadata(path: Path) -> pd.DataFrame:
         metadata["topics_prompt"] = metadata["topics_prompt"].apply(
             lambda p: str(Path(p).stem) if pd.notnull(p) else "human"
         )
+    metadata["topics_model"] = metadata["topics_model"].apply(LLM_NAMES.get)
+
     metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
-    metadata["model"] = metadata["model"].str.replace("-MT1000", "")
-    metadata["model"] = metadata["model"].str.replace("-MT100", "")
+    # metadata["model"] = metadata["model"].str.replace("-MT1000", "")
+    # metadata["model"] = metadata["model"].str.replace("-MT100", "")
     return metadata
 
 
-def load_qrel_from_path(qrels_path: Path, binarize_qrels: int = 0, replace_label_mapping: Dict[int, int] = None, drop_relevance_values: int = None) -> Experiment:
-    qrels = ir_measures.read_trec_qrels(
-        os.path.join(qrels_path, "qrels.csv.gz"))
+def load_qrel_from_path(
+    qrels_path: Path,
+    binarize_qrels: int = 0,
+    replace_label_mapping: Dict[int, int] = None,
+    drop_relevance_values: int = None,
+) -> Experiment:
+    qrels = ir_measures.read_trec_qrels(os.path.join(qrels_path, "qrels.csv.gz"))
 
     if replace_label_mapping:
-        qrels = QrelsTransformer.replace_relevance(
-            qrels, replace_label_mapping)
+        qrels = QrelsTransformer.replace_relevance(qrels, replace_label_mapping)
     if drop_relevance_values:
         qrels = QrelsTransformer.drop_relevance(
-            qrels, drop_values=drop_relevance_values)
+            qrels, drop_values=drop_relevance_values
+        )
     qrels = ir_measures.util.QrelsConverter(qrels).as_dict_of_dict()
     if len(qrels.keys()) == 0:
         raise "Qrels are empty after processing"
@@ -87,27 +90,31 @@ def load_qrel_from_path(qrels_path: Path, binarize_qrels: int = 0, replace_label
 
 
 def load_qrels_from_path(
-    qrels_path: Union[str, Path], binarize_qrels: int = 0, replace_label_mapping: Dict[int, int] = None, drop_relevance_values: int = None
+    qrels_path: Union[str, Path],
+    binarize_qrels: int = 0,
+    replace_label_mapping: Dict[int, int] = None,
+    drop_relevance_values: int = None,
 ) -> List[Experiment]:
-
     experiments = []
     for result in os.listdir(qrels_path):
         if not os.path.isdir(os.path.join(qrels_path, result)):
             continue
         try:
             qrels = ir_measures.read_trec_qrels(
-                os.path.join(qrels_path, result, "qrels.csv.gz"))
+                os.path.join(qrels_path, result, "qrels.csv.gz")
+            )
 
             if replace_label_mapping:
-                qrels = QrelsTransformer.replace_relevance(
-                    qrels, replace_label_mapping)
+                qrels = QrelsTransformer.replace_relevance(qrels, replace_label_mapping)
             if drop_relevance_values:
                 qrels = QrelsTransformer.drop_relevance(
-                    qrels, drop_values=drop_relevance_values)
+                    qrels, drop_values=drop_relevance_values
+                )
 
             if len(qrels.keys()) == 0:
                 logger.warning(
-                    f"Qrels for result {result} is empty after processing, skipping...")
+                    f"Qrels for result {result} is empty after processing, skipping..."
+                )
                 continue
 
             exp = Experiment(
