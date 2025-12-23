@@ -57,7 +57,7 @@ def read_metadata(path: Path) -> pd.DataFrame:
         )
         metadata["topics_model"] = metadata["topics_model"].apply(LLM_NAMES.get)
 
-        metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
+    metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
     # metadata["model"] = metadata["model"].str.replace("-MT1000", "")
     # metadata["model"] = metadata["model"].str.replace("-MT100", "")
     return metadata
@@ -79,7 +79,7 @@ def load_qrel_from_path(
         )
     qrels = ir_measures.util.QrelsConverter(qrels).as_dict_of_dict()
     if len(qrels.keys()) == 0:
-        raise "Qrels are empty after processing"
+        raise ValueError("Qrels are empty after processing")
 
     exp = Experiment(
         qrels=qrels,
