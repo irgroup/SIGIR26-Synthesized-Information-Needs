@@ -1,1 +1,0 @@
-{"date": "2025-12-01_07:59:23", "model": "gpt-oss-20B", "data": "robust", "prompt": "../data/raw/prompts/topic-docs-pos.yaml", "k": null, "nqueries": 0, "ndocspos": 2, "ndocsneg": 0, "output": "../data/interim/topics-robust", "task": "topics"}

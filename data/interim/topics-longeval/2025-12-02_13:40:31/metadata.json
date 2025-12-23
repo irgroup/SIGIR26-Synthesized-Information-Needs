@@ -1,1 +1,0 @@
-{"date": "2025-12-02_13:40:31", "model": "qwen3-30B-no-think", "data": "longeval-45-C", "prompt": "../data/raw/prompts/topic-query-contrastive.yaml", "k": null, "nqueries": 1, "ndocspos": 1, "ndocsneg": 1, "output": "../data/interim/topics-longeval", "task": "topics"}
