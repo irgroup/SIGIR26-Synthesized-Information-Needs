@@ -64,30 +64,30 @@ def alter_class(prompt: str, base_class: BaseModel) -> BaseModel:
 
     prompt = prompt.strip(".yaml")
     prompt_splits = prompt.split("-")
-    remove_fields = set()
+    topic_fields = set()
     masked = False
     for field in prompt_splits:
         if field == "masked":
             masked = True
             continue
         if masked:
-            remove_fields.add(field)
+            topic_fields.add(field)
 
     # Setup generator
     prompt_name = Path(prompt).stem
-    if remove_fields == {"title"}:
+    if topic_fields == {"title"}:
         output_class = TRECTitle
-    elif remove_fields == {"description", "narrative"}:
+    elif topic_fields == {"description", "narrative"}:
         output_class = TRECDescriptionNarrative
-    elif remove_fields == {"title", "narrative"}:
+    elif topic_fields == {"title", "narrative"}:
         output_class = TRECTitleNarrative
-    elif remove_fields == {"title", "description"}:
+    elif topic_fields == {"title", "description"}:
         output_class = TRECTitleDescription
-    elif remove_fields == {"narrative"}:
+    elif topic_fields == {"narrative"}:
         output_class = TRECNarrative
-    elif remove_fields == {"description"}:
+    elif topic_fields == {"description"}:
         output_class = TRECDescription
-    elif remove_fields == set():
+    elif topic_fields == set():
         output_class = TRECTopic
     else:
         raise ValueError(f"Unknown prompt name: {prompt_name}")
@@ -486,12 +486,13 @@ class LongEval(Dataset):
 class DL19(Dataset):
     def __init__(self):
         dataset = ir_datasets.load("msmarco-passage/trec-dl-2019/judged")
-        super().__init__(dataset)
+        super().__init__(dataset, n_test_qrels=4000)
+
 
 class DL20(Dataset):
     def __init__(self):
         dataset = ir_datasets.load("msmarco-passage/trec-dl-2020/judged")
-        super().__init__(dataset)
+        super().__init__(dataset, n_test_qrels=4000)
 
 
 def get_dataset(dataset_name: str):
@@ -507,7 +508,7 @@ def get_dataset(dataset_name: str):
         return LongEval_45_C()
     if dataset_name == "longeval-45-45":
         return LongEval_45_45()
-    if dataset_name == "longeval":
+    if dataset_name == "longeval-C-C":
         return LongEval()
     else:
         raise ValueError(f"Dataset {dataset_name} is not implemented.")

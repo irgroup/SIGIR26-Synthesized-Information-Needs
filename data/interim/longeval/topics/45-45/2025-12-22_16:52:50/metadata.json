@@ -1,0 +1,1 @@
+{"date": "2025-12-22_16:52:50", "model": "qwen3-30B-no-think", "data": "longeval-45-45", "prompt": "../data/raw/prompts/topic-docs-neg.yaml", "k": null, "nqueries": 0, "ndocspos": 0, "ndocsneg": 3, "output": "../data/interim/longeval/topics/45-45", "task": "topics"}

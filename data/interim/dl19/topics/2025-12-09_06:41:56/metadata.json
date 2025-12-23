@@ -1,1 +1,0 @@
-{"date": "2025-12-09_06:41:56", "model": "qwen3-30B-no-think", "data": "dl19", "prompt": "../data/raw/prompts/topic-docs-neg.yaml", "k": null, "nqueries": 0, "ndocspos": 0, "ndocsneg": 2, "output": "../data/interim/dl19/topics-dl19", "task": "topics"}

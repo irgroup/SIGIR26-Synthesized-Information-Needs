@@ -78,7 +78,7 @@ def get_llm_gpt_oss_120B(connection: str):
         openai_api_base=connection,
         openai_api_key="not-needed",
         model_name="openai/gpt-oss-120b",
-        extra_body={"chat_template_kwargs": {"enable_thinking": False}},
+        # extra_body={"reasoning_effort": "low"},
     )
 
 
@@ -93,15 +93,26 @@ def get_llm_gpt_oss_120B_MT1000(connection: str):
         },
     )
 
+def get_llm_nemotron3_30B(connection: str):
+    # from langchain_mistralai import ChatMistralAI
+
+    return ChatOpenAI(
+        openai_api_base=connection,
+        openai_api_key="not-needed",
+        model="nvidia/NVIDIA-Nemotron-3-Nano-30B-A3B-BF16",
+    )
+
 
 def get_llm_mistral3_14B_MT100(connection: str):
-    from langchain_mistralai import ChatMistralAI
+    # from langchain_mistralai import ChatMistralAI
 
-    return ChatMistralAI(
-        base_url=connection,
+    return ChatOpenAI(
+        openai_api_base=connection,
+        # base_url=connection,
+        openai_api_key="not-needed",
         model="mistralai/Ministral-3-14B-Instruct-2512",
         max_tokens=100,
-        model_kwargs={"chat_template_kwargs": {"enable_thinking": False}},
+        # model_kwargs={"chat_template_kwargs": {"enable_thinking": False}},
     )
 
 
@@ -215,6 +226,7 @@ def get_llm(llm_name: str, connection: str):
         "llama3-3-70b_instruct_q8": get_llm_llama3_3_70b_instruct_q8,
         "mistral3-14B-MT100": get_llm_mistral3_14B_MT100,
         "qwen3-80B-next-no-think": get_llm_qwen3_next_80B_fp8_no_think,
+        "get_llm_nemotron3_30B": get_llm_nemotron3_30B,
     }
     llm = llm_connections.get(llm_name)
     if llm is None:
@@ -243,6 +255,7 @@ LLM_NAMES = {
     "qwen3-80B-next-no-think": "Qwen3-Next-80B",
     "deepseek-V3.2": "Deepseek-V3.2",
     "gemini-2.5-flash": "Gemini-2.5-Flash",
+    "get_llm_nemotron3_30B": "NemoTron3-30B",
 }
 
 
@@ -260,4 +273,5 @@ MODEL_SORTER = [
     "GPT-OSS-120B-O",
     "Deepseek-V3.2",
     "Gemini-2.5-Flash",
+    "NemoTron3-30B",
 ]

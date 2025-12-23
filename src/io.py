@@ -55,9 +55,9 @@ def read_metadata(path: Path) -> pd.DataFrame:
         metadata["topics_prompt"] = metadata["topics_prompt"].apply(
             lambda p: str(Path(p).stem) if pd.notnull(p) else "human"
         )
-    metadata["topics_model"] = metadata["topics_model"].apply(LLM_NAMES.get)
+        metadata["topics_model"] = metadata["topics_model"].apply(LLM_NAMES.get)
 
-    metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
+        metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
     # metadata["model"] = metadata["model"].str.replace("-MT1000", "")
     # metadata["model"] = metadata["model"].str.replace("-MT100", "")
     return metadata
