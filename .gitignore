@@ -144,3 +144,4 @@ data/*
 .devcontainer/.env
 data/datasets
 publication
+.vscode
