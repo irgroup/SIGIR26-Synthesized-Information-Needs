@@ -1,0 +1,1 @@
+{"date": "2025-12-24_07:27:48", "model": "llama3-3-70b_instruct_q8", "data": "longeval-45-C", "prompt": "../data/raw/prompts/topic-docs-neg.yaml", "k": null, "nqueries": 0, "ndocspos": 0, "ndocsneg": 3, "output": "../data/interim/longeval/topics/45-C", "task": "topics"}
