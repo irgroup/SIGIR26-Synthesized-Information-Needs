@@ -1,0 +1,1 @@
+{"date": "2025-12-30_12:00:45", "model": "gpt-oss-20B", "data": "robust", "prompt": "../data/raw/prompts/topic-masked-title-narrative.yaml", "k": null, "nqueries": 0, "ndocspos": 0, "ndocsneg": 0, "output": "../data/interim/robust/topics-masked", "task": "topics"}
