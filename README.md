@@ -47,35 +47,35 @@ Masked qrel generation:
 ### 1. Robust
 |Task|Topics|Data|Script|Qwen3-30B|Qwen3-80N-Next|gpt-oss-20B|gpt-oss-120B|gpt-oss-120B-ollama|llama3.3-70B-instruct-q8_0|
 |---|---|---|---|---|---|---|---|---|---|
-|Qrels| (Masked) TREC |[qrels](./data/interim/robust/qrels-reference) |[script](./scripts/qrels-robust-reference.sh)| ✅ | ✅ | ✅ | ✅ | ✅ |  |
-|Topics|| [topics](./data/interim/robust/topics) |[script](./scripts/topics-robust.sh)| ✅ | ✅  | ✅ | ✅  | ✅ | stopped |
-|Masked Topics| partial TREC| [topics](./data/interim/robust/topics-masked) |[script](./scripts/topics-robust-masked.sh)|  |   |  |   |  |  |
-|Qrels| Gen | [qrels](./data/interim/robust/qrels-topics-generated) |[script](./scripts/qrels-robust-topics-generated.sh)|  |  |  |  |  |  |
-|Qrels|Masked Gen|tbd|tbd|  |  |  |  |  |  |
+|Qrels| (Masked) TREC |[qrels](./data/interim/robust/qrels-reference) |[script](./scripts/qrels-robust-reference.sh)| ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+|Topics|| [topics](./data/interim/robust/topics) |[script](./scripts/topics-robust.sh)| ✅ | ✅  | ✅ | ✅  | ✅ | ✅ |
+|Masked Topics| partial TREC| [topics](./data/interim/robust/topics-masked) |[script](./scripts/topics-robust-masked.sh)| ✅ | ✅ | ✅ | ✅ |  |  |
+|Qrels| Gen | [qrels](./data/interim/robust/qrels-topics-generated) |[script](./scripts/qrels-robust-topics-generated.sh)| ✅ | ✅ | ✅ | ✅ |  |  |
+|Qrels|Masked Gen|tbd|tbd| ✅ | ✅ | ✅ | ✅ |  |  |
 
 ### 2. TREC-DL 2019
-
-|Task|Topics|Data|Script|Qwen3-30B|Qwen3-80N-Next|gpt-oss-20B|gpt-oss-120B|gpt-oss-120B-ollama|llama3.3-70B-instruct-q8_0|
-|---|---|---|---|---|---|---|---|---|---|
-|Qrels| TREC |[qrels](./data/interim/dl19/qrels-reference) |[script](./scripts/qrels-dl19-reference.sh)| ✅ | ✅ | ✅ | ✅ |  |  |
-|Topics|| [topics](./data/interim/dl19/topics) |[script](./scripts/topics-dl19.sh)| ✅ | ✅ | ✅ | ✅ |  | wip |
-|Qrels| Gen | [qrels](./data/interim/dl19/qrels-topics-generated) |[script](./scripts/qrels-dl19-topics-generated.sh)|  |  |  |  |  |  |
+|Task|Topics|Data|Script|Qwen3-30B|Qwen3-80N-Next|gpt-oss-20B|gpt-oss-120B|llama3.3-70B-instruct-q8_0|
+|---|---|---|---|---|---|---|---|---|
+|Qrels| TREC |[qrels](./data/interim/dl19/qrels-reference) |[script](./scripts/qrels-dl19-reference.sh)| ✅ | ✅ | ✅ | ✅  | ✅ |
+|Topics|| [topics](./data/interim/dl19/topics) |[script](./scripts/topics-dl19.sh)| ✅ | ✅ | ✅ | ✅ |  | ✅ |
+|Qrels-Title| Gen | [qrels](./data/interim/dl19/qrels-topics-generated-title) |[script](./scripts/qrels-dl19-topics-generated.sh)| ✅ | ✅ | ✅ | ✅ |    |
+|Qrels|Gen|[qrels](./data/interim/dl19/qrels-topics-generated-full) |[script](./scripts/qrels-dl19-topics-generated.sh)| ✅ | ✅ | wip | wip |  |  
 
 
 ### 3. TREC-DL 2020
-
-|Task|Topics|Data|Script|Qwen3-30B|Qwen3-80N-Next|gpt-oss-20B|gpt-oss-120B|gpt-oss-120B-ollama|llama3.3-70B-instruct-q8_0|
-|---|---|---|---|---|---|---|---|---|---|
-|Qrels|TREC|[qrels](./data/interim/dl20/qrels-reference)|[script](./scripts/qrels-dl20-reference.sh)| ✅ | ✅  | ✅ | ✅ |  |  |
-|Topics||[topics](./data/interim/dl20/topics) |[script](./scripts/topics-dl20.sh)| ✅ | ✅ | ✅ | ✅ |  | wip |
-|Qrels|Gen|[qrels](./data/interim/dl20/qrels-topics-generated) |[script](./scripts/qrels-dl20-topics-generated.sh)|  |  |  |  |  |  |
+|Task|Topics|Data|Script|Qwen3-30B|Qwen3-80N-Next|gpt-oss-20B|gpt-oss-120B|llama3.3-70B-instruct-q8_0|
+|---|---|---|---|---|---|---|---|---|
+|Qrels|TREC|[qrels](./data/interim/dl20/qrels-reference)|[script](./scripts/qrels-dl20-reference.sh)| ✅ | ✅  | ✅ | ✅ |  ✅ |
+|Topics||[topics](./data/interim/dl20/topics) |[script](./scripts/topics-dl20.sh)| ✅ | ✅ | ✅ | ✅ |   ✅ |
+|Qrels-Title|Gen|[qrels](./data/interim/dl20/qrels-topics-generated-title) |[script](./scripts/qrels-dl20-topics-generated.sh)| ✅ | wip | | ✅ |  |  
+|Qrels| Gen | [qrels](./data/interim/dl20/qrels-topics-generated-full) |[script](./scripts/qrels-dl20-topics-generated.sh)|  |  |  |  |  |
 
 
 ### 4. LongEval 2023
 
 |Task|Topics|Data|Script|Qwen3-30B|Qwen3-80N-Next|gpt-oss-20B|gpt-oss-120B|gpt-oss-120B-ollama|llama3.3-70B-instruct-q8_0|
 |---|---|---|---|---|---|---|---|---|---|
-|Qrels|Click/Human|[qrels](./data/interim/longeval/qrels-reference)|[script](./scripts/qrels-longeval-reference.sh)|✅||✅|✅|||
-|Topics||[topics](./data/interim/longeval/topics)|[script](./scripts/topics-longeval.sh)|✅||✅|✅||wip|
-|Qrels|Gen|[qrels](./data/interim/longeval/qrels-topics-generated)|[script](./scripts/qrels-longeval-topics-generated.sh)|||||||
+|Qrels|Click/Human|[qrels](./data/interim/longeval/qrels-reference)|[script](./scripts/qrels-longeval-reference.sh)|✅||✅|✅|  |  |
+|Topics||[topics](./data/interim/longeval/topics)|[script](./scripts/topics-longeval.sh)|✅||✅|✅||✅|
+|Qrels|Gen|[qrels](./data/interim/longeval/qrels-topics-generated)|[script](./scripts/qrels-longeval-topics-generated.sh)| |  |  |  |  |  |
 
