@@ -32,9 +32,11 @@ def write_job_yaml(dataset, qrels_file):
     identifier = f"{dataset}-{qrels_file}".replace(":", "-").replace("_", "-")
     if dataset == "dl19":
         experiment_config = "trec-28"
+    elif dataset == "dl20":
+        experiment_config = "trec-29"
     else:
         raise ValueError("foo")
-    
+    qrel_mapping = '{\\"999\\": \\"0\\"}'
     yaml = f"""
 apiVersion: batch/v1
 kind: Job
@@ -55,7 +57,7 @@ spec:
       - name: c
         image: mam10eks/repro-eval:prod
         imagePullPolicy: Always
-        command: ["reliability-tests", "run-test", "--tests", "top-10-logo", "--input", "/data/experiments/{experiment_config}", "--qrels", "/outputs/{dataset}/qrels-topics-generated/{qrels_file}/qrels.csv.gz", "--output", "/outputs/{dataset}/qrels-analyzed/{qrels_file}/top-10-logo"]
+        command: ["reliability-tests", "run-test", "--tests", "top-10-logo", "--map-qrels", "{qrel_mapping}", "--input", "/data/experiments/{experiment_config}", "--qrels", "/outputs/{dataset}/qrels-topics-generated/{qrels_file}/qrels.csv.gz", "--output", "/outputs/{dataset}/qrels-analyzed/{qrels_file}/top-10-logo"]
         volumeMounts:
           - mountPath: "/mnt/ceph/storage/data-in-progress/data-research/web-search/web-search-trec/trec-system-runs/"
             name: run-dir
@@ -63,6 +65,8 @@ spec:
           - mountPath: "/data"
             name: data-dir
             readOnly: true
+          - mountPath: "/outputs"
+            name: outputs
         resources:
           requests:
             memory: 10Gi
@@ -88,7 +92,7 @@ spec:
     with open(f"jobs/{identifier}.yml", "w") as f:
         f.write(yaml)
 
-for ds in ["dl19"]:
+for ds in ["dl20"]:
     rels = []
     all_logo_tests(ds)
 
