@@ -171,8 +171,8 @@ def main():
     tex = tex.replace("nan", "-")
     tex = tex.replace("0.0", "-")
     print(tex)
-    out_file = Path("paper/tables/topic_masked_similarity.tex")
-    out_file.write_text(tex)
+    out_file = Path("../paper/tables/topic_masked_similarity.tex")
+    # out_file.write_text(tex)
     print(f"Wrote LaTeX table to {out_file}")
 
 
