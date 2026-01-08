@@ -93,6 +93,7 @@ def get_llm_gpt_oss_120B_MT1000(connection: str):
         },
     )
 
+
 def get_llm_nemotron3_30B(connection: str):
     # from langchain_mistralai import ChatMistralAI
 
@@ -260,6 +261,7 @@ LLM_NAMES = {
 
 
 MODEL_SORTER = [
+    "human",
     "gpt-4.1",
     "Llama3.1-8B",
     "Qwen3-14B",
@@ -267,11 +269,33 @@ MODEL_SORTER = [
     "GPT-OSS-20B",
     "Qwen3-30B-A3B-Instruct-2507-FP8",
     "Qwen3-30B",
+    "NemoTron3-30B",
     "Llama3.1-70B",
+    "Llama3.3-70B",
     "Qwen3-Next-80B",
     "GPT-OSS-120B",
     "GPT-OSS-120B-O",
     "Deepseek-V3.2",
     "Gemini-2.5-Flash",
-    "NemoTron3-30B",
+]
+
+COMPONENTS_SORTER = [
+    "Title, Description, Narrative",
+    "Title, Description",
+    "Title, Narrative",
+    "Description, Narrative",
+    "Title",
+    "Description",
+    "Narrative",
+]
+
+PROMPT_SORTER = [
+    "human",
+    "topic-query",
+    "topic-query-docs-neg",
+    "topic-query-docs-pos",
+    "topic-query-contrastive",
+    "topic-docs-neg",
+    "topic-docs-pos",
+    "topic-contrastive",
 ]

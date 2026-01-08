@@ -6,7 +6,7 @@ from typing import Dict, List, Union
 import ir_measures
 import pandas as pd
 from topic_gen import logger
-from topic_gen.evaluate import Experiment
+from topic_gen.evaluate import Experiment, MeasureResult
 from topic_gen.evaluate.io import read_jsonl_topics
 from topic_gen.evaluate.utils import QrelsTransformer
 
@@ -30,21 +30,22 @@ def load_topics_from_path(topics_path: Union[str, Path]) -> List[Experiment]:
     return experiments
 
 
-def read_metadata(path: Path) -> pd.DataFrame:
+def read_metadata(path: Path, long: bool = False) -> pd.DataFrame:
     metadata_records = []
     for result in os.listdir(path):
         if not os.path.isdir(os.path.join(path, result)):
             continue
-
         try:
             with open(os.path.join(path, result, "metadata.json")) as f:
                 metadata = json.load(f)
-            metadata["model"] = LLM_NAMES.get(metadata["model"], metadata["model"])
 
-            metadata_records.append(metadata)
         except FileNotFoundError:
             logger.warning(f"Metadata not found for result {result}, skipping...")
             continue
+
+        metadata["model"] = LLM_NAMES.get(metadata["model"], metadata["model"])
+        metadata["prompt"] = str(Path(metadata["prompt"]).stem)
+        metadata_records.append(metadata)
 
     metadata = pd.DataFrame(metadata_records)
     if "topics" in metadata.columns:
@@ -57,9 +58,13 @@ def read_metadata(path: Path) -> pd.DataFrame:
         )
         metadata["topics_model"] = metadata["topics_model"].apply(LLM_NAMES.get)
 
-    metadata["prompt"] = metadata["prompt"].apply(lambda p: str(Path(p).stem))
-    # metadata["model"] = metadata["model"].str.replace("-MT1000", "")
-    # metadata["model"] = metadata["model"].str.replace("-MT100", "")
+        metadata = metadata.rename(columns={"date": "name"})
+        return metadata.melt(id_vars="name", var_name="measure", value_name="value")
+
+    if long:
+        metadata = metadata.rename(columns={"date": "name"})
+        return metadata.melt(id_vars="name", var_name="measure", value_name="value")
+
     return metadata
 
 
@@ -96,6 +101,7 @@ def load_qrels_from_path(
     drop_relevance_values: int = None,
 ) -> List[Experiment]:
     experiments = []
+    missing_values = []
     for result in os.listdir(qrels_path):
         if not os.path.isdir(os.path.join(qrels_path, result)):
             continue
@@ -103,11 +109,13 @@ def load_qrels_from_path(
             qrels = ir_measures.read_trec_qrels(
                 os.path.join(qrels_path, result, "qrels.csv.gz")
             )
-
+            missing = 0
             if replace_label_mapping:
-                qrels = QrelsTransformer.replace_relevance(qrels, replace_label_mapping)
+                qrels, missing = QrelsTransformer.replace_relevance(
+                    qrels, replace_label_mapping
+                )
             if drop_relevance_values:
-                qrels = QrelsTransformer.drop_relevance(
+                qrels, missing = QrelsTransformer.drop_relevance(
                     qrels, drop_values=drop_relevance_values
                 )
 
@@ -123,8 +131,11 @@ def load_qrels_from_path(
                 binarize_qrels=binarize_qrels,
             )
 
+            missing_values.append(
+                MeasureResult(name=result, measure="missing_qrels_load", value=missing)
+            )
             experiments.append(exp)
         except Exception as e:
             print(f"Error loading experiment from {result}: {e}")
             continue
-    return experiments
+    return experiments, missing_values
