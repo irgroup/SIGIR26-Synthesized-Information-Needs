@@ -3,15 +3,22 @@ from glob import glob
 from tqdm import tqdm
 import json
 import gzip
+from pathlib import Path
 from statistics import mean
 
 def all_logo_tests(dataset):
-    for qrel_file in tqdm(glob(f'../data/interim/{dataset}/qrels-topics-generated/**/qrels.csv.gz')):
-        target_file = Path(f'../data/interim/{dataset}/qrels-analyzed') / Path(qrel_file).parent.name / "top-10-logo.jsonl.gz"
+    for qrel_file in tqdm(glob(f'../data/interim/{dataset}/qrels-topics-generated-title/**/qrels.csv.gz'), dataset):
+        target_file = Path(f'../data/interim/{dataset}/qrels-analyzed') / Path(qrel_file).parent.name / "top-10-logo" / "reliability-test-results.json.gz"
         if not target_file.is_file():
-            write_job_yaml(dataset, Path(qrel_file).parent.name)
+            write_job_yaml(dataset, Path(qrel_file).parent.name, "qrels-topics-generated-title")
 
-def write_job_yaml(dataset, qrels_file):
+    for qrel_file in tqdm(glob(f'../data/interim/{dataset}/qrels-topics-generated-full/**/qrels.csv.gz'), dataset):
+        target_file = Path(f'../data/interim/{dataset}/qrels-analyzed') / Path(qrel_file).parent.name / "top-10-logo" / "reliability-test-results.json.gz"
+        if not target_file.is_file():
+            write_job_yaml(dataset, Path(qrel_file).parent.name, "qrels-topics-generated-full")
+
+
+def write_job_yaml(dataset, qrels_file, directory):
     identifier = f"{dataset}-{qrels_file}".replace(":", "-").replace("_", "-")
     if dataset == "dl19":
         experiment_config = "trec-28"
@@ -40,7 +47,7 @@ spec:
       - name: c
         image: mam10eks/repro-eval:prod
         imagePullPolicy: Always
-        command: ["reliability-tests", "run-test", "--tests", "top-10-logo", "--map-qrels", "{qrel_mapping}", "--input", "/data/experiments/{experiment_config}", "--qrels", "/outputs/{dataset}/qrels-topics-generated/{qrels_file}/qrels.csv.gz", "--output", "/outputs/{dataset}/qrels-analyzed/{qrels_file}/top-10-logo"]
+        command: ["reliability-tests", "run-test", "--tests", "top-10-logo", "--map-qrels", "{qrel_mapping}", "--input", "/data/experiments/{experiment_config}", "--qrels", "/outputs/{dataset}/{directory}/{qrels_file}/qrels.csv.gz", "--output", "/outputs/{dataset}/qrels-analyzed/{qrels_file}/top-10-logo"]
         volumeMounts:
           - mountPath: "/mnt/ceph/storage/data-in-progress/data-research/web-search/web-search-trec/trec-system-runs/"
             name: run-dir
@@ -79,20 +86,21 @@ for ds in ["dl19", "dl20"]:
     rels = []
     all_logo_tests(ds)
 
+
 corr_to_measure_to_vals = {"spearman": {"nDCG@10": [], "nDCG@20": [], "nDCG": []}, "tauap_b": {"nDCG@10": [], "nDCG@20": [], "nDCG": []}}
 
-for corr in corr_to_measure_to_vals.keys():
-    for i in tqdm(glob("qrels-analyzed/**/top-10-logo/reliability-test-results.json.gz")):
-        with gzip.open(i, "rt") as f:
-            i = json.loads(f.read())
-            measures = {"nDCG@10": [], "nDCG@20": [], "nDCG": []}
-            for r in i["system_ranking_evaluation"]:
-                for m in measures.keys():
-                    measures[m].append(r[m][corr])
-            for m in measures.keys():
-                corr_to_measure_to_vals[corr][m].append(mean(measures[m]))
-
-def form(corr, measure):
-    return f"{mean(corr_to_measure_to_vals[corr][measure]):.3f}"
-
-print(f'\\cmark & \\xmark & \\xmark  & {form("spearman", "nDCG@10")} & .xy & {form("spearman", "nDCG@20")} & .xy & {form("spearman", "nDCG")} & .xy & {form("tauap_b", "nDCG@10")} & .xy & {form("tauap_b", "nDCG@20")} & .xy & {form("tauap_b", "nDCG")} & .xy\\\\')
+#for corr in corr_to_measure_to_vals.keys():
+#    for i in tqdm(glob("qrels-analyzed/**/top-10-logo/reliability-test-results.json.gz")):
+#        with gzip.open(i, "rt") as f:
+##            i = json.loads(f.read())
+#            measures = {"nDCG@10": [], "nDCG@20": [], "nDCG": []}
+#            for r in i["system_ranking_evaluation"]:
+#                for m in measures.keys():
+#                    measures[m].append(r[m][corr])
+#            for m in measures.keys():
+#                corr_to_measure_to_vals[corr][m].append(mean(measures[m]))
+#
+#def form(corr, measure):
+#    return f"{mean(corr_to_measure_to_vals[corr][measure]):.3f}"
+#
+#print(f'\\cmark & \\xmark & \\xmark  & {form("spearman", "nDCG@10")} & .xy & {form("spearman", "nDCG@20")} & .xy & {form("spearman", "nDCG")} & .xy & {form("tauap_b", "nDCG@10")} & .xy & {form("tauap_b", "nDCG@20")} & .xy & {form("tauap_b", "nDCG")} & .xy\\\\')
