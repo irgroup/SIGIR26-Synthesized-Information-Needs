@@ -87,20 +87,54 @@ for ds in ["dl19", "dl20"]:
     all_logo_tests(ds)
 
 
-corr_to_measure_to_vals = {"spearman": {"nDCG@10": [], "nDCG@20": [], "nDCG": []}, "tauap_b": {"nDCG@10": [], "nDCG@20": [], "nDCG": []}}
+ALLOWED_TOPIC_FORMATS = set()
+for qrel_file in glob(f'../data/interim/dl19/qrels-topics-generated-full/**/qrels.csv.gz'):
+    metadata_file = Path(qrel_file).parent / "metadata.json"
+    metadata = json.loads(metadata_file.read_text())
+    ALLOWED_TOPIC_FORMATS.add(metadata["topics"]["prompt"])
+print(ALLOWED_TOPIC_FORMATS)
 
-#for corr in corr_to_measure_to_vals.keys():
-#    for i in tqdm(glob("qrels-analyzed/**/top-10-logo/reliability-test-results.json.gz")):
-#        with gzip.open(i, "rt") as f:
-##            i = json.loads(f.read())
-#            measures = {"nDCG@10": [], "nDCG@20": [], "nDCG": []}
-#            for r in i["system_ranking_evaluation"]:
-#                for m in measures.keys():
-#                    measures[m].append(r[m][corr])
-#            for m in measures.keys():
-#                corr_to_measure_to_vals[corr][m].append(mean(measures[m]))
-#
-#def form(corr, measure):
-#    return f"{mean(corr_to_measure_to_vals[corr][measure]):.3f}"
-#
-#print(f'\\cmark & \\xmark & \\xmark  & {form("spearman", "nDCG@10")} & .xy & {form("spearman", "nDCG@20")} & .xy & {form("spearman", "nDCG")} & .xy & {form("tauap_b", "nDCG@10")} & .xy & {form("tauap_b", "nDCG@20")} & .xy & {form("tauap_b", "nDCG")} & .xy\\\\')
+qrel_files = {"full": [], "title": []}
+
+for t in qrel_files.keys():
+    for qrel_file in glob(f'../data/interim/dl19/qrels-topics-generated-{t}/**/qrels.csv.gz'):
+        metadata_file = Path(qrel_file).parent / "metadata.json"
+        metadata = json.loads(metadata_file.read_text())
+
+        if metadata["topics"]["prompt"] in ALLOWED_TOPIC_FORMATS:
+            qrel_files[t].append(Path(qrel_file).parent.name)
+
+
+print({k: len(v) for k, v in qrel_files.items()})
+
+def form(corr, measure):
+    return f"{mean(corr_to_measure_to_vals[corr][measure]):.3f}"
+
+skipped = 0
+
+for t in qrel_files.keys():
+    corr_to_measure_to_vals = {"spearman": {"nDCG@10": [], "nDCG@20": [], "nDCG": []}, "tauap_b": {"nDCG@10": [], "nDCG@20": [], "nDCG": []}}
+    for corr in corr_to_measure_to_vals.keys():
+        for qrel_file in qrel_files[t]:
+            target_file = Path(f"../data/interim/dl19/qrels-analyzed/{qrel_file}/top-10-logo/reliability-test-results.json.gz")
+            if not target_file.exists():
+                skipped += 1
+                continue
+            with gzip.open(target_file, "rt") as f:
+                i = json.loads(f.read())
+                measures = {"nDCG@10": [], "nDCG@20": [], "nDCG": []}
+                for r in i["system_ranking_evaluation"]:
+                    for m in measures.keys():
+                        measures[m].append(r[m][corr])
+                for m in measures.keys():
+                    corr_to_measure_to_vals[corr][m].append(mean(measures[m]))
+ 
+    if t == "full":
+        prefix = "\\cmark & \\cmark & \\cmark"
+    elif t == "title":
+        prefix = "\\cmark & \\xmark & \\xmark"
+    else:
+        raise ValueError("foo")
+    print(f'{prefix}  & {form("spearman", "nDCG@10")} & .xy & {form("spearman", "nDCG@20")} & .xy & {form("spearman", "nDCG")} & .xy & {form("tauap_b", "nDCG@10")} & .xy & {form("tauap_b", "nDCG@20")} & .xy & {form("tauap_b", "nDCG")} & .xy\\\\')
+
+print("skipped", skipped)
