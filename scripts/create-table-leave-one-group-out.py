@@ -26,7 +26,7 @@ def write_job_yaml(dataset, qrels_file, directory):
         experiment_config = "trec-29"
     else:
         raise ValueError("foo")
-    qrel_mapping = '{\\"999\\": \\"0\\"}'
+    qrel_mapping = '{\\"999\\": \\"0\\", \\"6\\": \\"0\\"}'
     yaml = f"""
 apiVersion: batch/v1
 kind: Job
