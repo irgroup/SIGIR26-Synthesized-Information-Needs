@@ -1,3 +1,6 @@
+import matplotlib
+
+matplotlib.use("Agg")  # Use non-interactive backend
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
@@ -7,9 +10,7 @@ from src.data import DATA_DIR_PROCESSED
 
 def main():
     # Load the dataset
-    df = pd.read_csv(
-        DATA_DIR_PROCESSED / "topic-similarity-robust-topics.tsv", sep="\t"
-    )
+    df = pd.read_csv(DATA_DIR_PROCESSED / "topic-similarity-robust-topics-q1.tsv", sep="\t")
     df = df.drop_duplicates()
 
     # Filter for the three similarity measures
@@ -61,6 +62,11 @@ def main():
     #     | (df_sim["nqueries"] != df_sim["ndocsneg"])
     # )
     # df_sim = df_sim[~contrastive_mask]
+    
+    # For topic-query-contrastive, only keep results where nqueries == ndocspos == ndocsneg
+    df_sim["context"] = df_sim[["ndocspos", "ndocsneg"]].max(axis=1)
+
+    print(df_sim)
 
     # Sort components in desired order
     df_sim["component"] = pd.Categorical(
@@ -82,14 +88,14 @@ def main():
     # Create the relplot with facets: columns per component, rows per measure
     g = sns.relplot(
         data=df_sim,
-        x="nqueries",
+        x="ndocspos",
         y="similarity",
         hue="model",
         style="prompt",
         col="component",
         row="metric",
         kind="line",
-        # markers=True,
+        markers=True,
         dashes=True,
         height=3,
         aspect=1.2,
@@ -98,7 +104,7 @@ def main():
     )
 
     # Customize the plot
-    g.set_axis_labels("Number of Queries", "Similarity Score")
+    g.set_axis_labels("Context", "Similarity Score")
     g.set_titles(col_template="{col_name}", row_template="{row_name}")
     g.fig.suptitle("Topic Similarity Measures by Component", y=1.02, fontsize=14)
 
@@ -107,7 +113,7 @@ def main():
         ax.set_xticks([1, 2, 3, 4, 5])
         ax.set_xlim(0.5, 5.5)
 
-    output_path = "publication/paper/figures/topic-similarity.pdf"
+    output_path = "publication/paper/figures/topic-similarity-q1.pdf"
     plt.savefig(
         output_path,
         dpi=300,
