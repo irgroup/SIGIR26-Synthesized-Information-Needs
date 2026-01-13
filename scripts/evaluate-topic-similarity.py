@@ -9,8 +9,10 @@ from topic_gen.evaluate.measures_agreement import (
     CosineSimilarity,
     JaccardIndex,
     RelativeLength,
+    RougeScore,
 )
 from topic_gen.evaluate.utils import TopicsTransformer
+
 from src.data import DATA_DIR_INTERIM, DATA_DIR_PROCESSED
 from src.io import load_topics_from_path, read_metadata
 
@@ -33,23 +35,29 @@ def main(dataset, input_):
         metadata.append(read_metadata(BASE_DIR / model, long=True))
         experiments.extend(load_topics_from_path(BASE_DIR / model))
     metadata = pd.concat(metadata)
-    
+
     # experiments = load_topics_from_path(BASE_DIR)
     # metadata = read_metadata(BASE_DIR , long=True)
 
     baseline = Experiment(topics=read_irds_topics("disks45/nocr/trec-robust-2004"))
 
-    # create a combined field 
+    # create a combined field
     experiments = [TopicsTransformer.add_combined_field(exp) for exp in experiments]
     baseline = TopicsTransformer.add_combined_field(baseline)
 
     meta_exp = MetaExperiment(
         experiments=experiments,
         baseline=baseline,
-        measures=[JaccardIndex(), RelativeLength(), CosineSimilarity()],
+        # measures=[JaccardIndex(), RelativeLength(), CosineSimilarity()],
         filter_topics=True,
         # bootstrap=20
-        # measures=[JaccardIndex(), BertScore(), RelativeLength(), CosineSimilarity()],
+        measures=[
+            RougeScore(),
+            JaccardIndex(),
+            BertScore(),
+            RelativeLength(),
+            CosineSimilarity(),
+        ],
     )
 
     res = meta_exp.evaluate()
