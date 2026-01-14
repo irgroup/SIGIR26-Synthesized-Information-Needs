@@ -1,10 +1,10 @@
 import re
-from pathlib import Path
 
 import pandas as pd
 
-from src.data import DATA_DIR_PROCESSED
 from src.config import MODEL_SORTER, PROMPT_SORTER
+from src.data import DATA_DIR_PROCESSED, PROJECT_ROOT
+
 
 def _ordered_multiindex(df, field_order=None, measure_order=None):
     pattern = re.compile(r"(?P<measure>.+)\((?P<field>.+)\)")
@@ -22,7 +22,7 @@ def _ordered_multiindex(df, field_order=None, measure_order=None):
         return [], None
 
     if field_order is None:
-        field_order = ["Title", "Description", "Narrative"]
+        field_order = ["combined", "Title", "Description", "Narrative"]
 
     if measure_order is None:
         seen = []
@@ -50,9 +50,12 @@ def _ordered_multiindex(df, field_order=None, measure_order=None):
 
 
 def main():
-    # df = pd.read_csv(DATA_DIR_PROCESSED / "similarity-robust-topics.tsv", sep="\t")
-    df = pd.read_csv(DATA_DIR_PROCESSED / "similarity-robust-topics-masked.tsv", sep="\t")
+    df = pd.read_csv(
+        DATA_DIR_PROCESSED / "topic-similarity-robust-topics.tsv", sep="\t"
+    )
+    # df = pd.read_csv(DATA_DIR_PROCESSED / "similarity-robust-topics-masked.tsv", sep="\t")
     df = df.drop_duplicates()
+    df = df[~df.duplicated(["name", "measure"])]
     df = df.pivot(index="name", columns="measure", values="value").reset_index()
 
     # Create mapping for column renaming
@@ -65,12 +68,27 @@ def main():
         "CosineSimilarity(title)": "Cos(Title)",
         "CosineSimilarity(description)": "Cos(Description)",
         "CosineSimilarity(narrative)": "Cos(Narrative)",
-        "JaccardIndex(title)": "Jac(Title)",
-        "JaccardIndex(description)": "Jac(Description)",
-        "JaccardIndex(narrative)": "Jac(Narrative)",
+        "CosineSimilarity(combined)": "Cos(Combined)",
+        "JaccardIndex(title)": "Jacc(Title)",
+        "JaccardIndex(description)": "Jacc(Description)",
+        "JaccardIndex(narrative)": "Jacc(Narrative)",
+        "JaccardIndex(combined)": "Jacc(Combined)",
+        "BertScore(title)": "BERT(Title)",
+        "BertScore(description)": "BERT(Description)",
+        "BertScore(narrative)": "BERT(Narrative)",
+        "BertScore(combined)": "BERT(Combined)",
+        "rougeL(title)": "RougeL(Title)",
+        "rougeL(description)": "RougeL(Description)",
+        "rougeL(narrative)": "RougeL(Narrative)",
+        "rougeL(combined)": "RougeL(Combined)",
+        "rouge1(title)": "Rouge1(Title)",
+        "rouge1(description)": "Rouge1(Description)",
+        "rouge1(narrative)": "Rouge1(Narrative)",
+        "rouge1(combined)": "Rouge1(Combined)",
         "RelativeLength(title)": "Len(Title)",
         "RelativeLength(description)": "Len(Description)",
         "RelativeLength(narrative)": "Len(Narrative)",
+        "RelativeLength(combined)": "Len(Combined)",
     }
 
     df = df.rename(columns=rename_map)
@@ -94,7 +112,11 @@ def main():
                 if ci_col in df.columns:
                     ci_cols_map[col] = ci_col
 
-    ordered_cols, mi = _ordered_multiindex(df[measure_cols])
+    ordered_cols, mi = _ordered_multiindex(
+        df[measure_cols],
+        field_order=["Combined", "Title", "Description", "Narrative"],
+        measure_order=["Cos", "BERT", "Jacc", "RougeL", "Rouge1", "Len"],
+    )
     if not ordered_cols:
         # fallback: keep original selection if parsing failed
         print("No measure columns parsed; printing head instead.")
@@ -139,7 +161,7 @@ def main():
     # Sort by Prompt (with q, d+, d-) and then by Model
     sort_cols = ["Prompt", "$q$", "$d^+$", "$d^-$", "Model"]
     sort_cols = [c for c in sort_cols if c in out_df.columns]
-    
+
     out_df["Model"] = pd.Categorical(out_df["Model"], MODEL_SORTER)
     out_df["Prompt"] = pd.Categorical(out_df["Prompt"], PROMPT_SORTER)
     out_df = out_df.sort_values(by=sort_cols).reset_index(drop=True)
@@ -157,10 +179,20 @@ def main():
     out_df.columns = pd.MultiIndex.from_tuples(tuples_all)
 
     tex = out_df.to_latex(index=False, multicolumn=True, escape=False)
-    
+
+    tex = tex.replace("topic-", "")
+    tex = tex.replace("GPT-OSS-20B", "gpt-oss-20b")
+    tex = tex.replace("GPT-OSS-120B-O", "gpt-oss-120b")
+    tex = tex.replace("GPT-OSS-120B", "gpt-oss-120b")
+    tex = tex.replace("Qwen3-Next-80B", "Qwen3-Next")
+    tex = tex.replace("0.", ".")
+    tex = tex.replace("Missing", "X")
+    tex = tex.replace("combined", "Combined")
+    tex = tex.replace("{r}", "{c}")
+    tex = tex.replace("lllllllllllllllllllllllllr", "lcccl" + 21 * "c")
     print(tex)
-    # out_file = Path("publication/paper/tables/similarity_table.tex")
-    # out_file.write_text(tex)
+    out_file = PROJECT_ROOT / "publication/paper/tables/topic-similarity.tex"
+    out_file.write_text(tex)
     # print(f"Wrote LaTeX table to {out_file}")
 
 
