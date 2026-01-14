@@ -1,6 +1,6 @@
 import pandas as pd
 
-from src.config import MODEL_SORTER, COMPONENTS_SORTER
+from src.config import COMPONENTS_SORTER, MODEL_SORTER
 from src.data import DATA_DIR_PROCESSED
 
 
@@ -19,45 +19,125 @@ def prompt_to_components(prompt: str) -> dict:
 
 
 def main(dataset, input_):
-    df = pd.read_csv(DATA_DIR_PROCESSED / f"alignment-{dataset}-{input_}.tsv", sep="\t")
-    df = df[df["name"] != "disks45/nocr/trec-robust-2004"]
+    # Load binary results
+    df_binary = pd.read_csv(
+        DATA_DIR_PROCESSED / f"alignment-{dataset}-{input_}-binary.tsv", sep="\t"
+    )
+    df_binary = df_binary[df_binary["name"] != "disks45/nocr/trec-robust-2004"]
 
-    df = df.pivot(index="name", columns="measure", values="value")
-    df.columns.name = None
-    df = df.reset_index()
+    df_binary = df_binary.pivot(index="name", columns="measure", values="value")
+    df_binary.columns.name = None
+    df_binary = df_binary.reset_index()
 
-    # df = df.dropna(subset=["Cohens $\\kappa$"])
-    df["components"] = df["prompt"].apply(prompt_to_components)
-    df["components"] = pd.Categorical(df["components"], COMPONENTS_SORTER)
+    # Load graded results
+    df_graded = pd.read_csv(
+        DATA_DIR_PROCESSED / f"alignment-{dataset}-{input_}-graded.tsv", sep="\t"
+    )
+    df_graded = df_graded[df_graded["name"] != "disks45/nocr/trec-robust-2004"]
 
-    df["model"] = pd.Categorical(df["model"], MODEL_SORTER)
+    df_graded = df_graded.pivot(index="name", columns="measure", values="value")
+    df_graded.columns.name = None
+    df_graded = df_graded.reset_index()
 
-    df = df[
+    # Process binary dataframe
+    df_binary["components"] = df_binary["prompt"].apply(prompt_to_components)
+    df_binary["components"] = pd.Categorical(df_binary["components"], COMPONENTS_SORTER)
+    df_binary["model"] = pd.Categorical(df_binary["model"], MODEL_SORTER)
+
+    df_binary = df_binary[
         [
             "model",
             "components",
             "Cohens $\\kappa$",
             "MAE",
-            "AUR",
             "missing_qrels_load",
-            "AUR_ci",
             "Cohens $\\kappa$_ci",
             "MAE_ci",
+            "label_dist(0)",
+            "label_dist(1)",
         ]
     ]
     # convert to floats
-    df["Cohens $\\kappa$"] = df["Cohens $\\kappa$"].astype(float)
-    df["MAE"] = df["MAE"].astype(float)
-    df["AUR"] = df["AUR"].astype(float)
-    df["AUR_ci"] = df["AUR_ci"].astype(float)
-    df["Cohens $\\kappa$_ci"] = df["Cohens $\\kappa$_ci"].astype(float)
-    df["MAE_ci"] = df["MAE_ci"].astype(float)
+    df_binary["Cohens $\\kappa$"] = df_binary["Cohens $\\kappa$"].astype(float)
+    df_binary["MAE"] = df_binary["MAE"].astype(float)
+    df_binary["Cohens $\\kappa$_ci"] = df_binary["Cohens $\\kappa$_ci"].astype(float)
+    df_binary["MAE_ci"] = df_binary["MAE_ci"].astype(float)
+    df_binary["label_dist(0)"] = df_binary["label_dist(0)"].astype(float).round(2)
+    df_binary["label_dist(1)"] = df_binary["label_dist(1)"].astype(float).round(2)
+
+    # Process graded dataframe
+    df_graded["components"] = df_graded["prompt"].apply(prompt_to_components)
+    df_graded["components"] = pd.Categorical(df_graded["components"], COMPONENTS_SORTER)
+    df_graded["model"] = pd.Categorical(df_graded["model"], MODEL_SORTER)
+
+    df_graded = df_graded[
+        [
+            "model",
+            "components",
+            "Cohens $\\kappa$",
+            "MAE",
+            "Cohens $\\kappa$_ci",
+            "MAE_ci",
+            "label_dist(0)",
+            "label_dist(1)",
+            "label_dist(2)",
+        ]
+    ]
+    # convert to floats
+    df_graded["Cohens $\\kappa$"] = df_graded["Cohens $\\kappa$"].astype(float)
+    df_graded["MAE"] = df_graded["MAE"].astype(float)
+    df_graded["Cohens $\\kappa$_ci"] = df_graded["Cohens $\\kappa$_ci"].astype(float)
+    df_graded["MAE_ci"] = df_graded["MAE_ci"].astype(float)
+    df_graded["label_dist(0)"] = df_graded["label_dist(0)"].astype(float).round(2)
+    df_graded["label_dist(1)"] = df_graded["label_dist(1)"].astype(float).round(2)
+    df_graded["label_dist(2)"] = df_graded["label_dist(2)"].astype(float).round(2)
+
+    # Merge binary and graded results
+    # Rename columns to distinguish between binary and graded
+    df_binary = df_binary.rename(
+        columns={
+            "Cohens $\\kappa$": "Cohens $\\kappa$ (bin)",
+            "MAE": "MAE (bin)",
+            "Cohens $\\kappa$_ci": "Cohens $\\kappa$_ci (bin)",
+            "MAE_ci": "MAE_ci (bin)",
+            "label_dist(0)": "0 (bin)",
+            "label_dist(1)": "1 (bin)",
+        },
+    )
+
+    df_graded = df_graded.rename(
+        columns={
+            "Cohens $\\kappa$": "Cohens $\\kappa$ (grad)",
+            "MAE": "MAE (grad)",
+            "Cohens $\\kappa$_ci": "Cohens $\\kappa$_ci (grad)",
+            "MAE_ci": "MAE_ci (grad)",
+            "label_dist(0)": "0 (grad)",
+            "label_dist(1)": "1 (grad)",
+            "label_dist(2)": "2 (grad)",
+        },
+    )
+
+    # Merge on name, model, components
+    df = df_binary.merge(
+        df_graded[
+            [
+                "model",
+                "components",
+                "Cohens $\\kappa$ (grad)",
+                "MAE (grad)",
+                "Cohens $\\kappa$_ci (grad)",
+                "MAE_ci (grad)",
+                "0 (grad)",
+                "1 (grad)",
+                "2 (grad)",
+            ]
+        ],
+        on=["model", "components"],
+        how="left",
+    )
 
     df = df.rename(
         columns={
-            "CohenKappa": "Cohen $\\kappa$",
-            "MeanAverageError": "MAE",
-            "AreaUnderReceiver": "AUC",
             "model": "Model",
             "components": "Components",
             "missing_qrels_load": "Missing",
@@ -75,36 +155,91 @@ def main(dataset, input_):
         except Exception:
             return str(val)
 
-    df["AUR"] = df.apply(lambda r: fmt_ci(r["AUR"], r["AUR_ci"]), axis=1)
-    df["Cohens $\\kappa$"] = df.apply(
-        lambda r: fmt_ci(r["Cohens $\\kappa$"], r["Cohens $\\kappa$_ci"]), axis=1
+    # Format binary metrics
+    df["Cohens $\\kappa$ (bin)"] = df.apply(
+        lambda r: fmt_ci(r["Cohens $\\kappa$ (bin)"], r["Cohens $\\kappa$_ci (bin)"]),
+        axis=1,
     )
-    df["MAE"] = df.apply(lambda r: fmt_ci(r["MAE"], r["MAE_ci"]), axis=1)
+    df["MAE (bin)"] = df.apply(
+        lambda r: fmt_ci(r["MAE (bin)"], r["MAE_ci (bin)"]), axis=1
+    )
+
+    # Format graded metrics
+    df["Cohens $\\kappa$ (grad)"] = df.apply(
+        lambda r: fmt_ci(r["Cohens $\\kappa$ (grad)"], r["Cohens $\\kappa$_ci (grad)"]),
+        axis=1,
+    )
+    df["MAE (grad)"] = df.apply(
+        lambda r: fmt_ci(r["MAE (grad)"], r["MAE_ci (grad)"]), axis=1
+    )
 
     # Drop CI helper columns from final table
     df = df.drop(
         columns=[
-            "AUR_ci",
-            "Cohens $\kappa$_ci",
-            "MAE_ci",
+            "Cohens $\kappa$_ci (bin)",
+            "MAE_ci (bin)",
+            "Cohens $\kappa$_ci (grad)",
+            "MAE_ci (grad)",
         ],
     )
 
     df = df.sort_values(["Components", "Model"]).set_index(["Components", "Model"])
 
+    # Create MultiIndex for columns
+    # Reorder and rename columns for multiindex
+    column_order = [
+        ("Missing", ""),
+        ("Binary", "Cohens $\\kappa$"),
+        ("Binary", "MAE"),
+        ("Binary", "0"),
+        ("Binary", "1"),
+        ("Graded", "Cohens $\\kappa$"),
+        ("Graded", "MAE"),
+        ("Graded", "0"),
+        ("Graded", "1"),
+        ("Graded", "2"),
+    ]
+
+    # Rename columns to match multiindex structure
+    df = df.rename(
+        columns={
+            "Cohens $\\kappa$ (bin)": ("Binary", "Cohens $\\kappa$"),
+            "MAE (bin)": ("Binary", "MAE"),
+            "0 (bin)": ("Binary", "0"),
+            "1 (bin)": ("Binary", "1"),
+            "Cohens $\\kappa$ (grad)": ("Graded", "Cohens $\\kappa$"),
+            "MAE (grad)": ("Graded", "MAE"),
+            "0 (grad)": ("Graded", "0"),
+            "1 (grad)": ("Graded", "1"),
+            "2 (grad)": ("Graded", "2"),
+            "Missing": ("Missing", ""),
+        }
+    )
+
+    # Create MultiIndex from tuples
+    df.columns = pd.MultiIndex.from_tuples(df.columns)
+
+    # Reorder columns
+    df = df[[col for col in column_order if col in df.columns]]
+
     # Only format numeric columns; metrics are now pre-formatted strings
-    # formatters = {
-    #     "Missing": lambda x: f"{x:.0f}",
-    # }
+    formatters = {
+        ("Binary", "0"): lambda x: f"{x:.2f}",
+        ("Binary", "1"): lambda x: f"{x:.2f}",
+        ("Graded", "0"): lambda x: f"{x:.2f}",
+        ("Graded", "1"): lambda x: f"{x:.2f}",
+        ("Graded", "2"): lambda x: f"{x:.2f}",
+    }
+    print(df)
 
     table = df.to_latex(
-        "publication/paper/tables/agreement_robust_reference.tex",
+        "publication/paper/tables/alignment-labels-robust-masked.tex",
         index=True,
         escape=False,
-        # formatters=formatters,
-        column_format="llcccc",
+        formatters=formatters,
+        column_format="lccccccccc",
+        multicolumn_format="c",
     )
-    print(table)
 
 
 if __name__ == "__main__":

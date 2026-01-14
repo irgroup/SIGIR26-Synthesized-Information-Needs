@@ -15,6 +15,14 @@ dependencies = [
     "seaborn>=0.13.2",
     "tirex-tracker>=0.2.18",
     "topic-gen[evaluate]",
+    "topic-gen",
+    "bert-score>=0.3.13",
+    "evaluate>=0.4.6",
+    "scipy>=1.16.3",
+    "sentence-transformers>=5.2.0",
+    "absl-py>=2.3.1",
+    "nltk>=3.9.2",
+    "rouge-score>=0.1.2",
 ]
 
 [tool.uv.workspace]

@@ -6,7 +6,7 @@ from src.data import DATA_DIR_PROCESSED
 DATASETS = {
     "Robust": "alignment-robust-qrels-topics-generated.tsv",
     "DL19": "alignment-dl19-qrels-topics-generated.tsv",
-    "DL20": "alignment-dl20-qrels-topics-generated.tsv",
+    # "DL20": "alignment-dl20-qrels-topics-generated.tsv",
 }
 
 RENAME_MAP = {
