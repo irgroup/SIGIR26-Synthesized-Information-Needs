@@ -20,7 +20,7 @@ from src.data import get_dataset, alter_class
 from src.config import get_llm
 from tirex_tracker import start_tracking, stop_tracking
 
-logger.setLevel("DEBUG")
+# logger.setLevel("DEBUG")
 
 
 @click.command()
@@ -40,8 +40,8 @@ def main(model, max_concurrency, connection, data, k, prompt, nqueries, ndocspos
     # setup tracking
     timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     os.mkdir(Path(output) / timestamp)
-    handle = start_tracking(export_file_path=Path(
-        output) / timestamp / "index-ir-metadata.yml")
+    # handle = start_tracking(export_file_path=Path(
+    #     output) / timestamp / "index-ir-metadata.yml")
 
     # Get LLM
     llm = get_llm(model, connection=connection)
@@ -99,7 +99,7 @@ def main(model, max_concurrency, connection, data, k, prompt, nqueries, ndocspos
     generated_topics = Topics[output_class](topics=topics)
     generated_topics.to_jsonl(Path(output) / timestamp / "topics.jsonl")
 
-    stop_tracking(handle)
+    # stop_tracking(handle)
 
 
 if __name__ == "__main__":

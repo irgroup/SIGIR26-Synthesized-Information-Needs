@@ -59,7 +59,7 @@ Masked qrel generation:
 |Qrels| TREC |[qrels](./data/interim/dl19/qrels-reference) |[script](./scripts/qrels-dl19-reference.sh)| ✅ | ✅ | ✅ | ✅  | ✅ |
 |Topics|| [topics](./data/interim/dl19/topics) |[script](./scripts/topics-dl19.sh)| ✅ | ✅ | ✅ | ✅ |  | ✅ |
 |Qrels-Title| Gen | [qrels](./data/interim/dl19/qrels-topics-generated-title) |[script](./scripts/qrels-dl19-topics-generated.sh)| ✅ | ✅ | ✅ | ✅ |    |
-|Qrels|Gen|[qrels](./data/interim/dl19/qrels-topics-generated-full) |[script](./scripts/qrels-dl19-topics-generated.sh)| ✅ | ✅ | wip | wip |  |  
+|Qrels selected |Gen|[qrels](./data/interim/dl19/qrels-topics-generated-full) |[script](./scripts/qrels-dl19-topics-generated.sh)| ✅ | ✅ | ✅ | ✅ |  |  
 
 
 ### 3. TREC-DL 2020
@@ -79,3 +79,40 @@ Masked qrel generation:
 |Topics||[topics](./data/interim/longeval/topics)|[script](./scripts/topics-longeval.sh)|✅||✅|✅||✅|
 |Qrels|Gen|[qrels](./data/interim/longeval/qrels-topics-generated)|[script](./scripts/qrels-longeval-topics-generated.sh)| |  |  |  |  |  |
 
+
+
+## Todo:
+### Qwen3-30B
+- [ ] Q1 qrels DL19 for robustness test: `bash ./qrels-dl19-topics-generated-full-4.sh`
+- [ ] Q1 qrels DL19 for robustness test:
+- [x] Contrastive DL19: qrels-title
+- [x] Contrastive DL19: qrels-title-description-narrative (full)
+- [ ] Contrastive DL19: qrels-title-narrative
+- [ ] Contrastive DL19: qrels-title-description
+- [ ] Contrastive DL20: qrels-title
+- [ ] Contrastive DL20: qrels-title-description-narrative (full)
+- [ ] Contrastive DL20: qrels-title-narrative
+- [ ] Contrastive DL20: qrels-title-description
+- [ ] Q1 DL20: for robustness test: `bash ./qrels-dl20-topics-generated-full-4.sh`
+
+### Qwen3-Next
+- [ ] WIP: Q1 qrels DL19 for robustness test: bash ./qrels-dl19-topics-generated-full-3.sh
+
+- [ ] Q1 Topics for topic similarity ablation study: bash ./topics-robust-Qwen3-Next.sh
+
+- [ ] Q1 qrels DL20 for robustness test: bash ./qrels-dl20-topics-generated-full-3.sh
+
+### GPT-OSS-120B
+- [ ] WIP: Q1 qrels DL19 for robustness test: bash ./qrels-dl19-topics-generated-full-2.sh
+
+- [ ] Q1 Topics for topic similarity ablation study: bash ./topics-robust-gpt-oss-120B.sh
+
+- [ ] Q1 qrels DL20 for robustness test: bash ./qrels-dl20-topics-generated-full-2.sh
+
+
+### GPT-OSS-20B
+- [ ] WIP: Q1 qrels DL19 for robustness test: bash ./qrels-dl19-topics-generated-full.sh
+
+- [ ] Q1 Topics for topic similarity ablation study: bash ./topics-robust-gpt-oss-20B.sh
+
+- [ ] Q1 qrels DL20 for robustness test: bash ./qrels-dl20-topics-generated-full.sh

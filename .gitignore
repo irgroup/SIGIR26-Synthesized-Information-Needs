@@ -141,7 +141,10 @@ cython_debug/
 
 # My Files 
 data/raw
+data/interim/backup
 .devcontainer/.env
 data/datasets
 publication
 .vscode
+
+scripts/*.sh

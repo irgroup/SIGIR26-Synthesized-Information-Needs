@@ -26,18 +26,18 @@ BASELINE = {
 def main(dataset, input_):
     BASE_DIR = DATA_DIR_INTERIM / dataset / input_
 
-    experiments = []
-    metadata = []
-    for model in os.listdir(BASE_DIR):
-        if model == "Llama3.3-70B":
-            continue
-        print(model)
-        metadata.append(read_metadata(BASE_DIR / model, long=True))
-        experiments.extend(load_topics_from_path(BASE_DIR / model))
-    metadata = pd.concat(metadata)
+    # experiments = []
+    # metadata = []
+    # for model in os.listdir(BASE_DIR):
+    #     if model == "Llama3.3-70B":
+    #         continue
+    #     print(model)
+    #     metadata.append(read_metadata(BASE_DIR / model, long=True))
+    #     experiments.extend(load_topics_from_path(BASE_DIR / model))
+    # metadata = pd.concat(metadata)
 
-    # experiments = load_topics_from_path(BASE_DIR)
-    # metadata = read_metadata(BASE_DIR , long=True)
+    experiments = load_topics_from_path(BASE_DIR)
+    metadata = read_metadata(BASE_DIR , long=True)
 
     baseline = Experiment(topics=read_irds_topics("disks45/nocr/trec-robust-2004"))
 
@@ -76,5 +76,6 @@ def main(dataset, input_):
 
 if __name__ == "__main__":
     dataset = "robust"
-    input_ = "topics"
+    input_ = "topics-q1"
+    input_ = "topics-masked"
     main(dataset, input_)

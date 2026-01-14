@@ -59,7 +59,8 @@ def read_metadata(path: Path, long: bool = False) -> pd.DataFrame:
         metadata["topics_model"] = metadata["topics_model"].apply(LLM_NAMES.get)
 
         metadata = metadata.rename(columns={"date": "name"})
-        return metadata.melt(id_vars="name", var_name="measure", value_name="value")
+        if long:
+            return metadata.melt(id_vars="name", var_name="measure", value_name="value")
 
     if long:
         metadata = metadata.rename(columns={"date": "name"})

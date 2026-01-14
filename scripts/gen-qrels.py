@@ -21,7 +21,7 @@ from src.config import get_llm
 from tirex_tracker import start_tracking, stop_tracking
 
 
-logger.setLevel("DEBUG")
+# logger.setLevel("DEBUG")
 
 
 @click.command()
@@ -36,13 +36,13 @@ logger.setLevel("DEBUG")
 @click.option("--topics", help="Topics file path", type=click.Path(), required=False, default=None)
 @click.option("--output", help="Output file path", type=click.Path(), default=".")
 @click.option("--no_compression", help="Compress output files", is_flag=True, default=False)
-@click.option("--all", help="Generate only the qrels used in the original paper.", is_flag=True, default=False)
+@click.option("--all", help="Generate all qrels.", is_flag=True, default=False)
 def main(model, max_concurrency, connection, data, k, prompt, topics, output, no_compression, all):
     # setup tracking
     timestamp = datetime.now().strftime('%Y-%m-%d_%H:%M:%S')
     os.mkdir(Path(output) / timestamp)
-    handle = start_tracking(export_file_path=Path(
-        output) / timestamp / "index-ir-metadata.yml")
+    # handle = start_tracking(export_file_path=Path(
+    #     output) / timestamp / "index-ir-metadata.yml")
 
     # Get LLM
     llm = get_llm(model, connection=connection)
@@ -119,7 +119,7 @@ def main(model, max_concurrency, connection, data, k, prompt, topics, output, no
         qrels.to_csv(Path(output) / timestamp / "qrels.csv", sep=" ",
                      index=False, header=False)
 
-    stop_tracking(handle)
+    # stop_tracking(handle)
 
 
 if __name__ == "__main__":
