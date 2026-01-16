@@ -1,9 +1,10 @@
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
 from src.data import DATA_DIR_PROCESSED, PROJECT_ROOT
-from pathlib import Path
 
 
 def main():
@@ -64,19 +65,11 @@ def main():
     df_sim = df_sim.dropna(subset=["similarity", "nqueries", "model", "prompt"])
 
     # Filter for prompts that start with "query"
-    df_sim = df_sim[df_sim["prompt"].str.startswith("query")]
+    df_sim = df_sim[~df_sim["prompt"].str.startswith("query")]
 
     # Remove Llama3.3-70B from evaluation
     df_sim = df_sim[df_sim["model"] != "Llama3.3-70B"]
 
-    # Exclude results where prompt is query-contrastive AND nqueries > 1
-    # df_sim = df_sim[
-    #     ~((df_sim["prompt"] != "query") & (df_sim["nqueries"] > 1))
-    # ]
-
-    df_sim = df_sim[
-        ((df_sim["nqueries"] <= 1))
-    ]
     # Create context column as max of nqueries, ndocspos, ndocsneg
     df_sim["context"] = df_sim[["nqueries", "ndocspos", "ndocsneg"]].max(axis=1)
 
@@ -139,14 +132,18 @@ def main():
     # Customize the plot
     g.set_axis_labels("Context", "Similarity")
     g.set_titles(col_template="{col_name}", row_template="{row_name}")
-    g.fig.suptitle("Topic Similarity Measures by Component for one Query and Additional Documents", y=1.02, fontsize=14)
+    g.fig.suptitle(
+        "Topic Similarity Measures by Component for no Query and Additional Documents",
+        y=1.02,
+        fontsize=14,
+    )
 
     # Set x-axis to show each query number
     for ax in g.axes.flat:
         ax.set_xticks([1, 2, 3, 4, 5])
         ax.set_xlim(0.85, 5.15)
 
-    output_path = "publication/paper/figures/topic-similarity.pdf"
+    output_path = "publication/paper/figures/topic-similarity-no-query.pdf"
     # output_path = "tmp.pdf"
     plt.savefig(
         Path(PROJECT_ROOT) / output_path,

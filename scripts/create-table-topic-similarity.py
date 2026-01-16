@@ -192,7 +192,7 @@ def main():
     tex = tex.replace("lllllllllllllllllllllllllr", "lcccl" + 21 * "c")
     print(tex)
     out_file = PROJECT_ROOT / "publication/paper/tables/topic-similarity.tex"
-    out_file.write_text(tex)
+    # out_file.write_text(tex)
     # print(f"Wrote LaTeX table to {out_file}")
 
 
