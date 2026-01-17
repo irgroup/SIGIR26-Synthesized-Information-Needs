@@ -1,0 +1,1 @@
+{"date": "2026-01-07_17:40:21", "model": "gpt-oss-120B", "data": "dl19", "prompt": "../data/raw/prompts/topic-query-docs-neg.yaml", "k": null, "nqueries": 1, "ndocspos": 0, "ndocsneg": 2, "output": "../data/interim/dl19_topics_2", "task": "topics"}
