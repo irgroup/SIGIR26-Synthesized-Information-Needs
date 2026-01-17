@@ -52,11 +52,11 @@ def main(dataset, input_):
         filter_topics=True,
         # bootstrap=20
         measures=[
-            RougeScore(),
+            # RougeScore(),
             JaccardIndex(),
-            BertScore(),
-            RelativeLength(),
-            CosineSimilarity(),
+            # BertScore(),
+            # RelativeLength(),
+            # CosineSimilarity(),
         ],
     )
 
@@ -68,7 +68,7 @@ def main(dataset, input_):
     print(df)
 
     df.to_csv(
-        DATA_DIR_PROCESSED / f"topic-similarity-{dataset}-{input_}.tsv",
+        DATA_DIR_PROCESSED / f"topic-similarity-{dataset}-{input_}_test.tsv",
         index=False,
         sep="\t",
     )
