@@ -1,0 +1,30 @@
+_type: prompt
+topic_type: TREC
+input_variables:
+- title
+- description
+- narrative
+
+template: 'You must reconstruct missing components of a search topic while maintaining internal consistency and a nuanced user intent. You will be provided with a partially masked TREC topic. Based on the available fields, infer the missing information and complete the topic.
+
+  The topic must include the following fields: title, description, and narrative. The title should be a brief, 2-4 word label for the topic. The description should clearly summarize the users information goal in one sentence or a question. The narrative should be a short statement that explains the users intent and the criteria for relevance.
+
+
+  The original title is:
+
+  {title}
+
+
+  The original description is:
+
+  {description}
+
+
+  The original narrative is:
+
+  {narrative}
+
+
+  Output Format and Structure:
+
+  {format_instructions}'

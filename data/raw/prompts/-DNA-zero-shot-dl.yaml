@@ -1,0 +1,61 @@
+_type: prompt
+input_variables:
+- query
+- description
+- narrative
+- document
+
+template: 'Given a query and a web page, you must provide a score on an integer scale of 0 to 3 with the following meanings: 
+
+  3 = Perfectly relevant: Document is dedicated to the query, it is worthy of being a top result in a search engine.
+
+  2 = Highly relevant: The content of this document provides substantial information on the query.
+  
+  1 = Relevant: Document provides some information relevant to the query, which may be minimal.
+  
+  0 = Irrelevant: Document does not provide any useful information about the query.
+
+
+  Assume that you are writing a report on the subject of the topic. If you would use any of the information contained in the web page in such a report, mark it 1. If the web page is primarily about the topic, or contains vital information about the topic, mark it 2. If the webpage directly answers the query to its full extend, mark it 3. Otherwise, mark it 0.
+
+
+  Query  
+
+  A person has typed {query} into a search engine. 
+
+
+  They were looking for: {description} {narrative} 
+
+
+  Result  
+
+  Consider the following web page.
+
+
+  — BEGIN WEB PAGE CONTENT - 
+
+  {document}
+
+  — END WEB PAGE CONTENT -
+
+
+  Instructions
+
+  Split this problem into steps:
+  
+
+  Consider the underlying intent of the search.
+  
+
+  Measure how well the content matches a likely intent of the query (M).
+  
+
+  Measure how trustworthy the web page is (T).
+  
+
+  Consider the aspects above and the relative importance of each, and decide on a final score (O).
+    
+
+  Output Format and Structure:
+
+  {format_instructions}'
