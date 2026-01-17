@@ -1,10 +1,10 @@
 import re
-from pathlib import Path
 
 import pandas as pd
 
-from src.data import DATA_DIR_PROCESSED
-from src.config import MODEL_SORTER, PROMPT_SORTER
+from src.data import DATA_DIR_PROCESSED, PROJECT_ROOT
+from src.config import MODEL_SORTER
+from pathlib import Path
 
 def prompt_to_components(prompt: str) -> dict:
     parts = prompt.split("-")
@@ -18,6 +18,7 @@ def prompt_to_components(prompt: str) -> dict:
     if prompt == "-DNA-zero-shot":
         return "Title, Description, Narrative"
     return ", ".join(components)
+
 
 def _ordered_multiindex(df, field_order=None, measure_order=None):
     pattern = re.compile(r"(?P<measure>.+)\((?P<field>.+)\)")
@@ -64,12 +65,13 @@ def _ordered_multiindex(df, field_order=None, measure_order=None):
 
 def main():
     # df = pd.read_csv(DATA_DIR_PROCESSED / "similarity-robust-topics.tsv", sep="\t")
-    df = pd.read_csv(DATA_DIR_PROCESSED / "similarity-robust-topics-masked.tsv", sep="\t")
-    df = df.drop_duplicates()
+    df = pd.read_csv(
+        DATA_DIR_PROCESSED / "topic-similarity-robust-topics-masked.tsv", sep="\t"
+    )
+    df = df.drop_duplicates()  # generation error column is duplicated
     df = df.pivot(index="name", columns="measure", values="value").reset_index()
-    
 
-    # Create mapping for column renaming
+    #     # Create mapping for column renaming
     rename_map = {
         "model": "Model",
         "prompt": "Fields",
@@ -82,17 +84,22 @@ def main():
         "RelativeLength(title)": "Len(Title)",
         "RelativeLength(description)": "Len(Description)",
         "RelativeLength(narrative)": "Len(Narrative)",
+        "rougeL(title)": "RougeL(Title)",
+        "rougeL(description)": "RougeL(Description)",
+        "rougeL(narrative)": "RougeL(Narrative)",
+        "BertScore(title)": "BERT(Title)",
+        "BertScore(description)": "BERT(Description)",
+        "BertScore(narrative)": "BERT(Narrative)",
     }
 
     df = df.rename(columns=rename_map)
     df["Fields"] = df["Fields"].apply(prompt_to_components)
+    # print(df[["Model", "Fields", "Jacc.(Narrative)", "BERT(Narrative)"]])
 
-    fixed_cols = [
-        c for c in ["Fields", "Model"] if c in df.columns
-    ]
+    fixed_cols = [c for c in ["Fields", "Model"] if c in df.columns]
 
-    # detect measure columns like 'Cos(Title)' (after renaming)
-    # and also track confidence intervals
+    #     # detect measure columns like 'Cos(Title)' (after renaming)
+    #     # and also track confidence intervals
     measure_cols = []
     ci_cols_map = {}  # maps original col name to its CI col
 
@@ -107,41 +114,39 @@ def main():
                     ci_cols_map[col] = ci_col
 
     ordered_cols, mi = _ordered_multiindex(df[measure_cols])
-    if not ordered_cols:
-        # fallback: keep original selection if parsing failed
-        print("No measure columns parsed; printing head instead.")
-        print(df.head())
-        return
 
     measure_df = df[ordered_cols].copy()
     measure_df = measure_df.apply(pd.to_numeric, errors="coerce")
 
-    # Add confidence intervals in light grey
-    for col in ordered_cols:
-        # Find the original column name (before renaming) to look up CI
-        orig_col = None
-        for orig, renamed in rename_map.items():
-            if renamed == col:
-                orig_col = orig
-                break
+    print(measure_df[["BERT(Narrative)", "Jacc.(Narrative)"]])
 
-        ci_col_name = orig_col + "_ci" if orig_col else col + "_ci"
 
-        if ci_col_name in df.columns:
-            ci_values = pd.to_numeric(df[ci_col_name], errors="coerce")
-            # Format main value with ci appended in light grey
-            formatted = measure_df[col].apply(
-                lambda x: f"{x:.2f}" if pd.notna(x) else ""
-            )
-            formatted = formatted.str.cat(
-                ci_values.apply(
-                    lambda x: f" {{\\color{{gray}} ±{x:.3f}}}" if pd.notna(x) else ""
-                ),
-                sep="",
-            )
-            measure_df[col] = formatted
-        else:
-            measure_df[col] = measure_df[col].round(2).astype(str)
+#     # Add confidence intervals in light grey
+#     for col in ordered_cols:
+#         # Find the original column name (before renaming) to look up CI
+#         orig_col = None
+#         for orig, renamed in rename_map.items():
+#             if renamed == col:
+#                 orig_col = orig
+#                 break
+
+#         ci_col_name = orig_col + "_ci" if orig_col else col + "_ci"
+
+#         if ci_col_name in df.columns:
+#             ci_values = pd.to_numeric(df[ci_col_name], errors="coerce")
+#             # Format main value with ci appended in light grey
+#             formatted = measure_df[col].apply(
+#                 lambda x: f"{x:.2f}" if pd.notna(x) else ""
+#             )
+#             formatted = formatted.str.cat(
+#                 ci_values.apply(
+#                     lambda x: f" {{\\color{{gray}} ±{x:.3f}}}" if pd.notna(x) else ""
+#                 ),
+#                 sep="",
+#             )
+#             measure_df[col] = formatted
+#         else:
+#             measure_df[col] = measure_df[col].round(2).astype(str)
 
     out_df = pd.concat(
         [df[fixed_cols].reset_index(drop=True), measure_df.reset_index(drop=True)],
@@ -151,28 +156,47 @@ def main():
     # Sort by Prompt (with q, d+, d-) and then by Model
     sort_cols = ["Fields", "Model"]
     sort_cols = [c for c in sort_cols if c in out_df.columns]
-    
+
     out_df["Model"] = pd.Categorical(out_df["Model"], MODEL_SORTER)
     # out_df["Prompt"] = pd.Categorical(out_df["Prompt"], PROMPT_SORTER)
     out_df = out_df.sort_values(by=sort_cols).reset_index(drop=True)
+    
 
-    # Add missing_topics column at the end if it exists
-    if "missing_topics" in df.columns:
-        missing = pd.to_numeric(df["missing_topics"], errors="coerce").astype("Int64")
-        out_df["Missing"] = missing
+#     # Add missing_topics column at the end if it exists
+#     if "missing_topics" in df.columns:
+#         missing = pd.to_numeric(df["missing_topics"], errors="coerce").astype("Int64")
+#         out_df["Missing"] = missing
 
 
     tuples_all = [("", c) for c in fixed_cols] + list(mi)
     if "Missing" in out_df.columns:
         tuples_all.append(("", "Missing"))
     out_df.columns = pd.MultiIndex.from_tuples(tuples_all)
+    
+    # round numeric columns and format for latex
+    for col in out_df.columns:
+        if col[1] not in fixed_cols:
+            out_df[col] = pd.to_numeric(out_df[col], errors="coerce").round(3)
+    
+    for col in out_df.columns:
+        if col[1] not in fixed_cols:
+            out_df[col] = out_df[col].apply(
+                lambda v: f"{v:.2f}".rstrip("0").rstrip(".") if pd.notna(v) else v
+            )
 
     tex = out_df.to_latex(index=False, multicolumn=True, escape=False)
-    tex = tex.replace("nan", "-")
-    tex = tex.replace("0.0", "-")
+    tex = tex.replace("NaN", "-")
+    tex = tex.replace(" 0 ", " - ")
+    tex = tex.replace(" 0.", " .")
+    tex = tex.replace("GPT-OSS-20B", "gpt-oss-20b")
+    tex = tex.replace("GPT-OSS-120B-O", "gpt-oss-120b")
+    tex = tex.replace("GPT-OSS-120B", "gpt-oss-120b")
+    tex = tex.replace("Qwen3-Next-80B", "Qwen3-Next")
+    tex = tex.replace("{r}", "{c}")
+    
     print(tex)
-    out_file = Path("../paper/tables/topic_masked_similarity.tex")
-    # out_file.write_text(tex)
+    out_file = PROJECT_ROOT / Path("publication/paper/tables/topic-similarity-masked.tex")
+    out_file.write_text(tex)
     print(f"Wrote LaTeX table to {out_file}")
 
 
