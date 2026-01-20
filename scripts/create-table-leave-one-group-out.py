@@ -100,7 +100,7 @@ def run_all_logo_tests():
 def print_results():
     ret = {}
     for dataset in ["dl19", "dl20"]:
-
+        ret[dataset] = {}
         qrel_files = {"full": [], "title": [], "title-description": [], "title-narrative": []}
 
         for t in qrel_files.keys():
@@ -140,7 +140,7 @@ def print_results():
 
 
 
-        ret[dataset] = {
+        ret[dataset][t] = {
              "nDCG@10": {
                  "spearman": form("spearman", "nDCG@10"),
                  "tauap_b": form("tauap_b", "nDCG@10"),
@@ -158,9 +158,10 @@ def print_results():
     print("skipped", skipped)
 
     for field, prefix in [("title", "\\cmark & \\xmark & \\xmark"), ("title-description", "\\cmark & \\cmark & \\xmark"), ("title-narrative", "\\cmark & \\xmark & \\cmark"), ("full", "\\cmark & \\cmark & \\cmark")]:
-        line = [ret["dl19"]["nDCG@10"]["spearman"], ret["dl20"]["nDCG@10"]["spearman"]]
-        line += [ret["dl19"]["nDCG@20"]["spearman"], ret["dl20"]["nDCG@20"]["spearman"]]
-        line += [ret["dl19"]["nDCG"]["spearman"], ret["dl20"]["nDCG"]["spearman"]]
+        for corr in ["spearman", "tauap_b"]:
+            line = [ret["dl19"][field]["nDCG@10"][corr], ret["dl20"][field]["nDCG@10"][corr]]
+            line += [ret["dl19"][field]["nDCG@20"][corr], ret["dl20"][field]["nDCG@20"][corr]]
+            line += [ret["dl19"][field]["nDCG"][corr], ret["dl20"][field]["nDCG"][corr]]
         print(prefix + " & " + " & ".join(line) + "\\\\")
 
 
