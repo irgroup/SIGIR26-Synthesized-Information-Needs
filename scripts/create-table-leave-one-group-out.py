@@ -101,8 +101,7 @@ def print_results():
     ret = {}
     for dataset in ["dl19", "dl20"]:
 
-#        qrel_files = {"full": [], "title": [], "title-description": [], "title-narrative": []}
-        qrel_files = {"title-description": [], "title-narrative": []}
+        qrel_files = {"full": [], "title": [], "title-description": [], "title-narrative": []}
 
         for t in qrel_files.keys():
             for qrel_file in glob(f'../data/interim/{dataset}/qrels-topics-generated-{t}/**/qrels.csv.gz'):
@@ -166,5 +165,5 @@ def print_results():
 
 
 if __name__ == '__main__':
-    run_all_logo_tests()
-    #print_results()
+    #run_all_logo_tests()
+    print_results()
