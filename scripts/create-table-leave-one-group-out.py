@@ -140,20 +140,20 @@ def print_results():
 
 
 
-        ret[dataset][t] = {
-             "nDCG@10": {
-                 "spearman": form("spearman", "nDCG@10"),
-                 "tauap_b": form("tauap_b", "nDCG@10"),
-             },
-             "nDCG@20": {
-                 "spearman": form("spearman", "nDCG@20"),
-                 "tauap_b": form("tauap_b", "nDCG@20"),
-             },
-             "nDCG": {
-                 "spearman": form("spearman", "nDCG"),
-                 "tauap_b": form("tauap_b", "nDCG"),
-             }
-        }
+            ret[dataset][t] = {
+                "nDCG@10": {
+                    "spearman": form("spearman", "nDCG@10"),
+                    "tauap_b": form("tauap_b", "nDCG@10"),
+                },
+                "nDCG@20": {
+                    "spearman": form("spearman", "nDCG@20"),
+                    "tauap_b": form("tauap_b", "nDCG@20"),
+                },
+                "nDCG": {
+                    "spearman": form("spearman", "nDCG"),
+                    "tauap_b": form("tauap_b", "nDCG"),
+                }
+            }
 
     print("skipped", skipped)
 
