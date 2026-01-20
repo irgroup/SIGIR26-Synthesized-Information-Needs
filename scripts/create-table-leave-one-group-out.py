@@ -158,8 +158,9 @@ def print_results():
     print("skipped", skipped)
 
     for field, prefix in [("title", "\\cmark & \\xmark & \\xmark"), ("title-description", "\\cmark & \\cmark & \\xmark"), ("title-narrative", "\\cmark & \\xmark & \\cmark"), ("full", "\\cmark & \\cmark & \\cmark")]:
+        line = []
         for corr in ["spearman", "tauap_b"]:
-            line = [ret["dl19"][field]["nDCG@10"][corr], ret["dl20"][field]["nDCG@10"][corr]]
+            line += [ret["dl19"][field]["nDCG@10"][corr], ret["dl20"][field]["nDCG@10"][corr]]
             line += [ret["dl19"][field]["nDCG@20"][corr], ret["dl20"][field]["nDCG@20"][corr]]
             line += [ret["dl19"][field]["nDCG"][corr], ret["dl20"][field]["nDCG"][corr]]
         print(prefix + " & " + " & ".join(line) + "\\\\")
