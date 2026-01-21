@@ -6,9 +6,17 @@ from tqdm import tqdm
 from subprocess import check_output
 import pandas as pd
 from statistics import mean
+from src.io import read_metadata
 
-def all_qrels(dataset):
-    for qrel_file in tqdm(glob(f'../data/interim/{dataset}/qrels-topics-generated/**/qrels.csv.gz')):
+def allowed_qrels(dataset, topic_type):
+    metadata = read_metadata(f'../data/interim/{dataset}/qrels-{topic_type}')
+    df = metadata[(metadata['topics_nqueries'] == 1.0) & (metadata["topics_prompt"].isin(["topic-query", "topic-query-contrastive"]))]
+    return set(df["name"].unique())
+    
+
+def all_qrels(dataset, topic_type):
+    for qrel_file in tqdm(glob(f'../data/interim/{dataset}/qrels-{topic_type}/**/qrels.csv.gz')):
+        raise ValueError(qrel_file.parent.parent.name)
         target_file = Path(f'../data/interim/{dataset}/qrels-analyzed') / Path(qrel_file).parent.name / "qrels-analyzed.jsonl.gz"
         if not target_file.is_file():
             target_file.parent.mkdir(parents=True, exist_ok=True)
@@ -21,15 +29,21 @@ def all_qrels(dataset):
         assert len(ret) == 1
         yield ret[0]
 
-line = "\\cmark & \\xmark & \\xmark  & & "
+line = "  & & "
 
-for ds in ["dl19", "dl20", "robust"]:
-    rels = []
-    for rel in all_qrels(ds):
-        rels.append(rel)
+ret = {}
 
+#for ds in ["dl19", "dl20", "robust"]:
+for ds in ["dl19", "dl20"]:
+    ret[ds] = {}
+    for qrel_type in ["reference", "topics-generated-title-description", "topics-generated-full", "topics-generated-title-narrative"]:
+        rels = []
+        print(len(list(all_qrels(ds, qrel_type))))
+        for rel in all_qrels(ds, qrel_type):
+            rels.append(rel)
+        ret[ds][qrel_type] = str(int((mean(rels) * 10000))/100)
 
-    line += " & " + str(int((mean(rels) * 10000))/100) + "\\,\\%"
-
-print(line)
+for k, v in [("reference", "\\cmark & \\xmark & \\xmark"), ("topics-generated-title-description", "\\cmark & \\cmark & \\xmark"), ("topics-generated-title-narrative", "\\cmark & \\xmark & \\cmark"), ("topics-generated-full", "\\cmark & \\cmark & \\cmark")]:
+    l = [v, "---", "---", ret["dl19"][k], ret["dl20"][k]]
+    print(" & ".join(l) + "\\\\")
 
