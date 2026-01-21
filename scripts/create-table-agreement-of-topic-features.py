@@ -6,17 +6,23 @@ from tqdm import tqdm
 from subprocess import check_output
 import pandas as pd
 from statistics import mean
-from src.io import read_metadata
+import json
 
 def allowed_qrels(dataset, topic_type):
-    metadata = read_metadata(f'../data/interim/{dataset}/qrels-{topic_type}')
-    df = metadata[(metadata['topics_nqueries'] == 1.0) & (metadata["topics_prompt"].isin(["topic-query", "topic-query-contrastive"]))]
-    return set(df["name"].unique())
+    if "reference" == topic_type:
+        return None
     
+    ret = json.load(open('../data/interim/qrels_metadata.json'))
+    return set(ret["qrels_topic_features"][dataset][f"qrels-{topic_type}"])
+
 
 def all_qrels(dataset, topic_type):
+    allow_list = allowed_qrels(dataset, topic_type)
     for qrel_file in tqdm(glob(f'../data/interim/{dataset}/qrels-{topic_type}/**/qrels.csv.gz')):
-        raise ValueError(qrel_file.parent.parent.name)
+        if allow_list is not None:
+            if Path(qrel_file).parent.name not in allow_list:
+                continue
+
         target_file = Path(f'../data/interim/{dataset}/qrels-analyzed') / Path(qrel_file).parent.name / "qrels-analyzed.jsonl.gz"
         if not target_file.is_file():
             target_file.parent.mkdir(parents=True, exist_ok=True)
@@ -28,8 +34,6 @@ def all_qrels(dataset, topic_type):
         ret = [v for k, v in ret.items() if k not in ("Measure", "Aspect")]
         assert len(ret) == 1
         yield ret[0]
-
-line = "  & & "
 
 ret = {}
 
