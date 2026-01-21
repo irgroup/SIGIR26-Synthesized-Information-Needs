@@ -97,14 +97,26 @@ def run_all_logo_tests():
         rels = []
         all_logo_tests(ds)
 
+
+def allowed_qrels(dataset, topic_type):
+    if "reference" == topic_type:
+        return None
+    
+    ret = json.load(open('../data/interim/qrels_metadata.json'))
+    return set(ret["qrels_topic_features"][dataset][f"qrels-{topic_type}"])        
+
 def print_results():
     ret = {}
     for dataset in ["dl19", "dl20"]:
         ret[dataset] = {}
-        qrel_files = {"full": [], "title": [], "title-description": [], "title-narrative": []}
+        qrel_files = {"reference": [], "topics-generated-title-description": [], "topics-generated-full": [], "topics-generated-title-narrative": []}
 
         for t in qrel_files.keys():
-            for qrel_file in glob(f'../data/interim/{dataset}/qrels-topics-generated-{t}/**/qrels.csv.gz'):
+            allow_list = allowed_qrels(dataset, t)
+            for qrel_file in glob(f'../data/interim/{dataset}/qrels-{t}/**/qrels.csv.gz'):
+                if allow_list is not None:
+                    if Path(qrel_file).parent.name not in allow_list:
+                        continue
                 metadata_file = Path(qrel_file).parent / "metadata.json"
                 metadata = json.loads(metadata_file.read_text())
 
@@ -157,7 +169,7 @@ def print_results():
 
     print("skipped", skipped)
 
-    for field, prefix in [("title", "\\cmark & \\xmark & \\xmark"), ("title-description", "\\cmark & \\cmark & \\xmark"), ("title-narrative", "\\cmark & \\xmark & \\cmark"), ("full", "\\cmark & \\cmark & \\cmark")]:
+    for field, prefix in [("reference", "\\cmark & \\xmark & \\xmark"), ("topics-generated-title-description", "\\cmark & \\cmark & \\xmark"), ("topics-generated-title-narrative", "\\cmark & \\xmark & \\cmark"), ("topics-generated-full", "\\cmark & \\cmark & \\cmark")]:
         line = []
         for corr in ["spearman", "tauap_b"]:
             line += [ret["dl19"][field]["nDCG@10"][corr], ret["dl20"][field]["nDCG@10"][corr]]
