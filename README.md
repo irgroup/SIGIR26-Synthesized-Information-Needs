@@ -1,4 +1,4 @@
-# SIGIR26-Formalized-Information-Needs
+# SIGIR26-Synthesized-Information-Needs
 
 ## Setup and Reproduction
 Install the dependencies listed in the [pyprojects.toml](./pyproject.toml) for example with poetry:
