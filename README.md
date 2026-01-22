@@ -1,8 +1,13 @@
 # SIGIR26-Synthesized-Information-Needs
+Code and data for the paper: *Formalized Information Needs Improve Large-Language-Model Relevance Judgments*
 
 ## Setup
 Install the dependencies listed in the [pyprojects.toml](./pyproject.toml) for example with poetry:
 `uv sync`
+
+## Results
+All synthesized topics and LLM judgments are provided in the [data/interim](./data/interim/) directory.
+Summarizing statistics such as topic and label similarity are provided in the [data/processed](./data/processed/) directory.
 
 
 ## Topic-Gen
@@ -12,13 +17,7 @@ The [Topic-Gen](./topic-gen/) toolkit is used to generate topics and qrels.
 ## Synthesizing Topics
 Topics are generated with the [gen-topics.py](./scripts/gen-topics.py) script.
 
-
-
-## LLM Relevance Assessments
-Qrels are generated with the [gen-qrels.py](./scripts/gen-qrels.py) script.
-
-
-## Prompts
+### Prompts
 Topic generation:
 - [query](./data/raw/prompts/topic-query.yaml): Query(-variants) only 
 - [docs-pos](./data/raw/prompts/topic-docs-pos.yaml): Relevant Documents
@@ -36,6 +35,11 @@ Masked topic generation:
 - [topic-masked-title-narrative](data/raw/prompts/topic-masked-title-narrative.yaml)
 - [topic-masked-description-narrative](data/raw/prompts/topic-masked-description-narrative.yaml) 
 
+
+## LLM Relevance Assessments
+Qrels are generated with the [gen-qrels.py](./scripts/gen-qrels.py) script.
+
+### Prompts
 Qrel generation:
 - [-DNA-zero-shot](topic-gen/topic_gen/prompts/-DNA-zero-shot.yaml)
 - [qrel_zeroshot_bing](topic-gen/topic_gen/prompts/qrel_zeroshot_bing.yaml)
@@ -47,3 +51,7 @@ Masked qrel generation:
 - [-DNA-zero-shot-masked-title-description](data/raw/prompts/-DNA-zero-shot-masked-title-description.yaml) 
 - [-DNA-zero-shot-masked-title-narrative](data/raw/prompts/-DNA-zero-shot-masked-title-narrative.yaml) 
 - [-DNA-zero-shot-masked-description-narrative](data/raw/prompts/-DNA-zero-shot-masked-description-narrative.yaml) 
+
+
+## Evaluation
+All evaluation scripts are available from the [scripts](./scripts/) directory.
