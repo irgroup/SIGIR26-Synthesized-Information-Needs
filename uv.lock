@@ -468,8 +468,10 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "absl-py" },
+    { name = "bert-score" },
     { name = "click" },
     { name = "datasets" },
+    { name = "evaluate" },
     { name = "ipykernel" },
     { name = "ir-datasets" },
     { name = "ir-datasets-longeval" },
@@ -477,7 +479,9 @@ dependencies = [
     { name = "nltk" },
     { name = "pandas" },
     { name = "rouge-score" },
+    { name = "scipy" },
     { name = "seaborn" },
+    { name = "sentence-transformers" },
     { name = "tirex-tracker" },
     { name = "topic-gen", extra = ["evaluate"] },
 ]
@@ -485,8 +489,10 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "absl-py", specifier = ">=2.3.1" },
+    { name = "bert-score", specifier = ">=0.3.13" },
     { name = "click", specifier = ">=8.3.1" },
     { name = "datasets", specifier = ">=4.4.2" },
+    { name = "evaluate", specifier = ">=0.4.6" },
     { name = "ipykernel", specifier = ">=7.1.0" },
     { name = "ir-datasets", specifier = ">=0.5.11" },
     { name = "ir-datasets-longeval", specifier = ">=0.0.11" },
@@ -494,8 +500,11 @@ requires-dist = [
     { name = "nltk", specifier = ">=3.9.2" },
     { name = "pandas", specifier = ">=2.3.3" },
     { name = "rouge-score", specifier = ">=0.1.2" },
+    { name = "scipy", specifier = ">=1.16.3" },
     { name = "seaborn", specifier = ">=0.13.2" },
+    { name = "sentence-transformers", specifier = ">=5.2.0" },
     { name = "tirex-tracker", specifier = ">=0.2.18" },
+    { name = "topic-gen", editable = "topic-gen" },
     { name = "topic-gen", extras = ["evaluate"], editable = "topic-gen" },
 ]
 

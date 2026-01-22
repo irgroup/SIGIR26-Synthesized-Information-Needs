@@ -1,0 +1,42 @@
+[project]
+name = "topic-gen"
+version = "0.1.0"
+description = "Topic generation"
+authors = [
+  {name = "Jüri Keller", email = "jueri.keller@th-koeln.de"},
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "langchain>=1.1.2",
+  "python-dotenv>=0.9.9",
+  "tqdm>=4.67.1",
+  "langchain-core>=1.1.1",
+  "pydantic>=2.12.5",
+]
+
+[project.scripts]
+topic-gen = "topic_gen.__main__:main_cli"
+
+[project.optional-dependencies]
+evaluate = [
+  "ir-measures>=0.4.3",
+  "bert-score>=0.3.13",
+  "krippendorff>=0.8.2",
+  "statsmodels>=0.14.5",
+  "evaluate>=0.4.6",
+  "scipy>=1.16.3",
+  "sentence-transformers>=5.1.2",
+]
+
+[dependency-groups]
+dev = [
+  "pytest>=9.0.1",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["topic_gen"]
