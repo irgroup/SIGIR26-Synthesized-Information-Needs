@@ -1,8 +1,22 @@
 # SIGIR26-Synthesized-Information-Needs
 
-## Setup and Reproduction
+## Setup
 Install the dependencies listed in the [pyprojects.toml](./pyproject.toml) for example with poetry:
 `uv sync`
+
+
+## Topic-Gen
+The [Topic-Gen](./topic-gen/) toolkit is used to generate topics and qrels. 
+
+
+## Synthesizing Topics
+Topics are generated with the [gen-topics.py](./scripts/gen-topics.py) script.
+
+
+
+## LLM Relevance Assessments
+Qrels are generated with the [gen-qrels.py](./scripts/gen-qrels.py) script.
+
 
 ## Prompts
 Topic generation:
