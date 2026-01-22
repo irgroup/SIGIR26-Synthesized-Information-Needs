@@ -26,16 +26,6 @@ BASELINE = {
 def main(dataset, input_):
     BASE_DIR = DATA_DIR_INTERIM / dataset / input_
 
-    # experiments = []
-    # metadata = []
-    # for model in os.listdir(BASE_DIR):
-    #     if model == "Llama3.3-70B":
-    #         continue
-    #     print(model)
-    #     metadata.append(read_metadata(BASE_DIR / model, long=True))
-    #     experiments.extend(load_topics_from_path(BASE_DIR / model))
-    # metadata = pd.concat(metadata)
-
     experiments = load_topics_from_path(BASE_DIR)
     metadata = read_metadata(BASE_DIR , long=True)
 

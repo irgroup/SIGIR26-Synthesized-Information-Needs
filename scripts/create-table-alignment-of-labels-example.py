@@ -6,11 +6,15 @@ from src.data import DATA_DIR_PROCESSED
 DATASETS = {
     "Robust": {
         "binary": "label-alignment-robust-qrels-topics-generated-binary.tsv",
-        "graded": "label-alignment-robust-qrels-topics-generated-graded.tsv",
+        "graded": "label-alignment-robust-qrels-topics-generated.tsv",
     },
     "DL19": {
         "binary": "label-alignment-dl19-qrels-topics-generated-full-binary.tsv",
-        "graded": "label-alignment-dl19-qrels-topics-generated-full-graded.tsv",
+        "graded": "label-alignment-dl19-qrels-topics-generated-full.tsv",
+    },
+    "DL20": {
+        "binary": "label-alignment-dl20-qrels-topics-generated-full-binary.tsv",
+        "graded": "label-alignment-dl20-qrels-topics-generated-full.tsv",
     },
 }
 
@@ -20,7 +24,7 @@ RENAME_MAP = {
     "topics_ndocsneg": "$d^-$",
     "model": "Model",
     "topics_prompt": "Prompt",
-    "missing_qrels_load": "X",
+    "missing_qrels": "X",
     "label_dist(0)": "0",
     "label_dist(1)": "1",
     "label_dist(2)": "2",
@@ -36,11 +40,15 @@ def _prepare_dataset(
     df = pd.read_csv(DATA_DIR_PROCESSED / file_name, sep="\t")
     df = df.drop_duplicates()
     df = df.pivot(index="name", columns="measure", values="value").reset_index()
+
+    # fix model name
     df["topics_model"] = df["topics_model"].str.replace(
         "GPT-OSS-120B-O", "GPT-OSS-120B"
     )
 
+    # use only rows where the topic and judgment are done by the same LLM
     df = df[(df["model"] == df["topics_model"]) | (df["topics_prompt"] == "human")]
+
     df["model"] = pd.Categorical(df["model"], MODEL_SORTER)
     df["topics_prompt"] = pd.Categorical(df["topics_prompt"], PROMPT_SORTER)
 
@@ -61,7 +69,9 @@ def _prepare_dataset(
         for col in ["0", "1", "2", "3"]:
             if col in df.columns:
                 label_cols.append(col)
-        # Don't add X for graded (already shown in binary)
+        # Add X to show missing qrels count
+        if "X" in df.columns:
+            label_cols.append("X")
     else:
         label_cols = []
 
@@ -85,9 +95,7 @@ def _prepare_dataset(
     # Format label distribution columns without trailing zeros
     for col in label_cols:
         if col in df.columns and col != "X":
-            df[col] = df[col].apply(
-                lambda v: f"{v:.2f}".rstrip("0").rstrip(".") if pd.notna(v) else v
-            )
+            df[col] = df[col].apply(lambda v: f"{v:.2f}" if pd.notna(v) else v)
 
     # Combine measure and CI columns into "value±ci" format
     measures = [
@@ -105,12 +113,11 @@ def _prepare_dataset(
             )
 
     # Keep only the main columns (drop separate CI columns)
-    final_metric_cols = ["$\\kappa$", "MAE"] + label_cols
     if "X" in label_cols:
         # Put X first, then metrics, then other labels
-        ordered_labels = ["X"] + [c for c in label_cols if c != "X"]
-        final_metric_cols = ["$\\kappa$", "MAE"]
-        final_metric_cols = ["X"] + final_metric_cols + ordered_labels[1:]
+        ordered_labels = [c for c in label_cols if c != "X"]
+        final_metric_cols = ["X", "$\\kappa$", "MAE"]
+        final_metric_cols = final_metric_cols + ordered_labels
     else:
         final_metric_cols = ["$\\kappa$", "MAE"] + label_cols
     df = df[base_cols + final_metric_cols]
@@ -118,12 +125,9 @@ def _prepare_dataset(
     # If model is filtered, don't need Model in the index
     if model_filter:
         index_cols = ["Prompt", "$q$", "$d^+$", "$d^-$"]
-        sort_cols = index_cols
     else:
         index_cols = ["Prompt", "$q$", "$d^+$", "$d^-$", "Model"]
-        sort_cols = index_cols
 
-    df = df.sort_values(sort_cols)
     df = df.set_index(index_cols)
 
     metric_cols = [col for col in final_metric_cols if col in df.columns]
@@ -136,10 +140,12 @@ def _prepare_dataset(
     return df
 
 
-def main(model: str | None = None):
+def main(model: str | None = None, include_binary: bool = True):
     tables = []
     for dataset_label, files in DATASETS.items():
         for grade_type, file_name in files.items():
+            if not include_binary and grade_type == "binary":
+                continue
             table = _prepare_dataset(
                 file_name, dataset_label, grade_type, model_filter=model
             )
@@ -152,31 +158,26 @@ def main(model: str | None = None):
 
     # Calculate column format: 3 or 4 index columns + metrics per dataset/type
     num_index_cols = 4 if model else 5  # Prompt, q, d+, d- (+ Model if not filtered)
-    num_metric_cols = sum(
-        len(combined.columns.get_level_values(2).unique())
-        for _ in range(len(combined.columns))
-    )
 
     column_format = "l" * num_index_cols + "c" * len(combined.columns)
 
+    suffix = "-no-binary" if not include_binary else ""
     filename = (
-        f"publication/paper/tables/agreement-label-{model}.tex"
+        f"publication/paper/tables/agreement-label-{model}{suffix}.tex"
         if model
-        else "publication/paper/tables/agreement-label-all-models.tex"
+        else f"publication/paper/tables/agreement-label-all-models{suffix}.tex"
     )
     latex_output = combined.to_latex(
-        filename,
+        # filename,
         index=True,
         escape=False,
         column_format=column_format,
         multicolumn=True,
         multicolumn_format="c",
     )
-    print("\n" + "=" * 80)
-    print("LaTeX output written to:")
-    print("publication/paper/tables/agreement_label_binary_graded.tex")
-    print("=" * 80)
 
 
 if __name__ == "__main__":
-    main(model="GPT-OSS-120B")
+    # main(model=None, include_binary=True)
+    main(model="GPT-OSS-120B", include_binary=False)
+    # main(include_binary=True)
