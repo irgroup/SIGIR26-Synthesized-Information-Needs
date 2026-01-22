@@ -78,21 +78,21 @@ def load_qrel_from_path(
     qrels = ir_measures.read_trec_qrels(os.path.join(qrels_path, "qrels.csv.gz"))
 
     if replace_label_mapping:
-        qrels = QrelsTransformer.replace_relevance(qrels, replace_label_mapping)
+        qrels, missing = QrelsTransformer.replace_relevance(
+            qrels, replace_label_mapping
+        )
     if drop_relevance_values:
-        qrels = QrelsTransformer.drop_relevance(
+        qrels, missing = QrelsTransformer.drop_relevance(
             qrels, drop_values=drop_relevance_values
         )
-    qrels = ir_measures.util.QrelsConverter(qrels).as_dict_of_dict()
-    if len(qrels.keys()) == 0:
-        raise ValueError("Qrels are empty after processing")
 
     exp = Experiment(
         qrels=qrels,
         name=qrels_path.stem,
         binarize_qrels=binarize_qrels,
     )
-    return exp
+    missing_values = MeasureResult(name=qrels_path.stem, measure="missing_qrels_load", value=missing)
+    return exp, missing_values
 
 
 def load_qrels_from_path(
