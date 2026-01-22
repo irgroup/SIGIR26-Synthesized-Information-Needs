@@ -1,1 +1,0 @@
-{"date": "2025-12-22_20:07:40", "model": "gpt-oss-20B", "data": "longeval-45-C", "prompt": "../data/raw/prompts/topic-query.yaml", "k": null, "nqueries": 1, "ndocspos": 0, "ndocsneg": 0, "output": "../data/interim/longeval/topics/45-C", "task": "topics"}

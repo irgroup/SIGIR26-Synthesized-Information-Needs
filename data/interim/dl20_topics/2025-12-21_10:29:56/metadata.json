@@ -1,1 +1,0 @@
-{"date": "2025-12-21_10:29:56", "model": "qwen3-80B-next-no-think", "data": "dl20", "prompt": "../data/raw/prompts/topic-query-contrastive.yaml", "k": null, "nqueries": 1, "ndocspos": 5, "ndocsneg": 5, "output": "../data/interim/dl20/topics", "task": "topics"}
