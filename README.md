@@ -1,5 +1,20 @@
-# SIGIR26-Synthesized-Information-Needs
-Code and data for the paper: *Formalized Information Needs Improve Large-Language-Model Relevance Judgments*
+# Formalized Information Needs Improve Large-Language-Model Relevance Judgments
+
+[![Venue: SIGIR 2026](https://img.shields.io/badge/Venue-SIGIR%202026-blue.svg)](https://sigir2026.org)
+[![arXiv](https://img.shields.io/badge/arXiv-2604.04140-b31b1b.svg)](https://arxiv.org/abs/2604.04140)
+[![DOI: doi](https://img.shields.io/badge/DOI-10.1145/3805712.3809561-blue.svg)](https://doi.org/10.1145/3805712.3809561)
+
+
+> **Formalized Information Needs Improve Large-Language-Model Relevance Judgments**
+> Jüri Keller, Maik Fröbe, Björn Engelmann, Fabian Haak, Timo Breuer, Birger Larsen, and Philipp Schaer.
+> *Proceedings of the 49th International ACM SIGIR Conference on Research and Development in Information Retrieval (SIGIR ’26)*.
+
+> [!TIP]
+> The camera ready version is now available on [arXiv](https://arxiv.org/abs/2604.04140).
+
+## Abstract
+> Cranfield-style retrieval evaluations with too few or too many relevant documents or with low inter-assessor agreement on relevance can reduce the reliability of observations. In evaluations with human assessors, information needs are often formalized as retrieval topics to avoid an excessive number of relevant documents while maintaining good agreement. However, emerging evaluation setups that use Large Language Models (LLMs) as relevance assessors often use only queries, potentially decreasing the reliability. To study whether LLM relevance assessors benefit from formalized information needs, we synthetically formalize information needs with LLMs into topics that follow the established structure from previous human relevance assessments (i.e., descriptions and narratives). We compare assessors using synthetically formalized topics against the LLM-default query-only assessor on the 2019/2020 editions of TREC Deep Learning and Robust04. We find that assessors without formalization judge many more documents relevant and have a lower agreement, leading to reduced reliability in retrieval evaluations. Furthermore, we show that the formalized topics improve agreement between human and LLM relevance judgments, even when the topics are not highly similar to their human counterparts. Our findings indicate that LLM relevance assessors should use formalized information needs, as is standard for human assessment, and synthetically formalize topics when no human formalization exists to improve evaluation reliability.
+
 
 ## Setup
 Install the dependencies listed in the [pyprojects.toml](./pyproject.toml) for example with poetry:
