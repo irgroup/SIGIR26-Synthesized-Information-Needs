@@ -17,8 +17,9 @@
 
 
 ## Setup
-Install the dependencies listed in the [pyprojects.toml](./pyproject.toml) for example with poetry:
+Install the dependencies listed in the [pyprojects.toml](./pyproject.toml):
 `uv sync`
+
 
 ## Results
 All synthesized topics and LLM judgments are provided in the [data/interim](./data/interim/) directory.
@@ -31,6 +32,7 @@ The [Topic-Gen](./topic-gen/) toolkit is used to generate topics and qrels.
 
 ## Synthesizing Topics
 Topics are generated with the [gen-topics.py](./scripts/gen-topics.py) script.
+
 
 ### Prompts
 Topic generation:
